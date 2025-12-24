@@ -8,5 +8,12 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/redis": "^4.0.11",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^17.2.3",
+    "redis": "^5.10.0",
+    "ws": "^8.18.3"
   }
 }
