@@ -12,15 +12,17 @@ interface CreateOrder{
         orderId:string,
         asset:string,
         price:number,
-        slippage:number
+        slippage:number,
+        type:"buy"| "sell"
     }
 }
 
 router.post("/trade/create", async (req:express.Request, res:express.Response)=>{
-    const {userId, asset, price, slippage} = req.body;
+    const {userId, asset, price, slippage, type} = req.body;
     const orderId = crypto.randomUUID();
+    console.log("data received:", userId,asset,price,slippage)
 
-    if(!userId || !asset || !price || !slippage){
+    if(!userId || !asset || !price || !slippage || !type){
         return res.status(404).json({msg:"Missing details to create the order!"})
     }
 
@@ -31,7 +33,8 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
             orderId,
             asset,
             price,
-            slippage
+            slippage,
+            type
         }
     }
 
@@ -42,6 +45,13 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
             data:JSON.stringify(createOrder)
         }
     )
+
+    const engineResponse = await client.XREAD(
+        {key:"engine-response", id:"$"},
+        {BLOCK:0, COUNT:1}
+    )
+    console.log(JSON.stringify(engineResponse))
+    return res.status(200).json({msg:"order successful", engineResponse})
 
     //response will be given to user only after engine process the order and acknowledge here! That same response will be passed to user.
 })
