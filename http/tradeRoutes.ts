@@ -2,42 +2,58 @@ import express from "express";
 import { createClient } from "redis"
 
 const router = express.Router();
-const client = createClient();
+const redisClient = createClient();
+
+const client = redisClient.duplicate();
 await client.connect();
+
+const subcribe = redisClient.duplicate();
+await subcribe.connect();
 
 interface CreateOrder{
     action:string,
-    data:{
-        userId:string,
-        orderId:string,
-        asset:string,
-        price:number,
-        slippage:number,
-        type:"buy"| "sell"
-    }
+    userId:string,
+    orderId:string,
+    asset:string,
+    margin:number,
+    type:"buy"| "sell",
+    leverage:number,
+    status:"open"|"closed"
 }
 
 router.post("/trade/create", async (req:express.Request, res:express.Response)=>{
-    const {userId, asset, price, slippage, type} = req.body;
+    const {userId, asset, type, margin, leverage} = req.body;
     const orderId = crypto.randomUUID();
-    console.log("data received:", userId,asset,price,slippage)
 
-    if(!userId || !asset || !price || !slippage || !type){
+    if(!userId || !asset || !margin || !leverage || !type){
         return res.status(404).json({msg:"Missing details to create the order!"})
     }
 
     const createOrder: CreateOrder = {
         action:"CREATE_ORDER",
-        data:{
-            userId,
-            orderId,
-            asset,
-            price,
-            slippage,
-            type
-        }
+        userId,
+        orderId,
+        asset,
+        margin:margin*10000,
+        type,
+        leverage,
+        status:"open"
     }
+    //defining new promise here to avoid the res hangout issue
+    const responsePromise = new Promise(async(resolve, reject)=>{
+        const timeout = setTimeout(()=>{
+            reject(new Error("Timeout"))
+        }, 5000);
 
+        await subcribe.subscribe(`${orderId}`,(data)=>{
+            clearTimeout(timeout)
+            subcribe.unsubscribe(`${orderId}`);
+            resolve(data)
+        })
+
+    })
+        
+    //adding the order in the stream to let the engine pickup from there
     await client.XADD(
         "trade",
         "*",
@@ -45,15 +61,11 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
             data:JSON.stringify(createOrder)
         }
     )
+    
+    const result = await responsePromise;
 
-    const engineResponse = await client.XREAD(
-        {key:"engine-response", id:"$"},
-        {BLOCK:0, COUNT:1}
-    )
-    console.log(JSON.stringify(engineResponse))
-    return res.status(200).json({msg:"order successful", engineResponse})
+    return res.status(200).json({msg:"create order places successful", orderId:result})
 
-    //response will be given to user only after engine process the order and acknowledge here! That same response will be passed to user.
 })
 
 export default router;

@@ -6,12 +6,10 @@ const client = createClient();
 
 interface Payload{
     action:string,
-    data:{
-        asset:string,
-        askWithSpread:number,
-        bidWithSpread:number,
-        decimal:number
-    }
+    asset:string,
+    askWithSpread:number,
+    bidWithSpread:number,
+    decimal:number
 }
 
 ws.on('error',console.error)
@@ -35,12 +33,11 @@ ws.on('message',async(event)=>{
 
     const payload:Payload = {
         action:"PRICE_UPDATE",
-        data:{
-            asset:(stream.data.s).split("_")[0],
-            askWithSpread:Math.trunc(askWithSpread*10000),
-            bidWithSpread:Math.trunc(bidWithSpread*10000),
-            decimal:4
-        }
+        asset:(stream.data.s).split("_")[0],
+        askWithSpread:Math.trunc(askWithSpread*10000),
+        bidWithSpread:Math.trunc(bidWithSpread*10000),
+        decimal:4
+
     }
 
 
@@ -52,9 +49,9 @@ ws.on('message',async(event)=>{
         }
     )
 
-    console.log("Asset:", payload.data.asset);
-    console.log("Ask with spread",payload.data.askWithSpread);
-    console.log("Bid with spread",payload.data.bidWithSpread);
+    console.log("Asset:", payload.asset);
+    console.log("Ask with spread",payload.askWithSpread);
+    console.log("Bid with spread",payload.bidWithSpread);
 
     console.log("stream pushed to redis stream")
     console.log("\n")
