@@ -10,6 +10,7 @@ await publisher.connect()
 
 const latestPrice = new Map<string, {ask:number, bid:number, decimal:number}>()
 const userBalance = new Map<string,number>() //userId and balance
+const openOrders = new Map<string, any[]>();
 
 const DECIMAL_VALUE=10000;
 
@@ -51,6 +52,9 @@ while(true){
                         }
                         userBalance.set(data.userId, balance - data.margin)
                         console.log("users balance after placing order",userBalance)
+                        if(!openOrders.has(userId)) openOrders.set(userId, []);
+                        openOrders.get(userId)?.push(createdOrder)
+                        console.log("openOrders:", openOrders);
     
                         await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
     
