@@ -10,6 +10,8 @@ await client.connect();
 const subcribe = redisClient.duplicate();
 await subcribe.connect();
 
+const DECIMAL_VALUE=10000;
+
 interface CreateOrder{
     action:string,
     userId:string,
@@ -24,7 +26,7 @@ interface CreateOrder{
 router.post("/trade/create", async (req:express.Request, res:express.Response)=>{
     const {userId, asset, type, margin, leverage} = req.body;
     const orderId = crypto.randomUUID();
-
+    
     if(!userId || !asset || !margin || !leverage || !type){
         return res.status(404).json({msg:"Missing details to create the order!"})
     }
@@ -34,7 +36,7 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
         userId,
         orderId,
         asset,
-        margin:margin*10000,
+        margin:margin*DECIMAL_VALUE,
         type,
         leverage,
         status:"open"
@@ -62,9 +64,14 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
         }
     )
     
-    const result = await responsePromise;
+    const result:any = await responsePromise;
+    const parsedResult = JSON.parse(result)
 
-    return res.status(200).json({msg:"create order places successful", orderId:result})
+    if(parsedResult.reqStatus==='success'){
+        return res.status(200).json({msg:"create order placed successful", orderId:parsedResult.orderId})
+    }else if(parsedResult.reqStatus==='failed'){
+        return res.status(400).json({msg:"order failed due to insufficient balance"})
+    }
 
 })
 
