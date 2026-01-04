@@ -23,8 +23,8 @@ ws.on('open',async()=>{
 
 ws.on('message',async(event)=>{
     const stream = JSON.parse(event.toString())
-    const AskSpread = 0.99;
-    const BidSpread = 1.01;
+    const AskSpread = 0.999;
+    const BidSpread = 1.001;
     const askWithSpread = parseFloat(stream.data.a)*AskSpread
     const bidWithSpread = parseFloat(stream.data.b)*BidSpread
     // console.log("Type of askWithSpread",typeof askWithSpread)

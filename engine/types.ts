@@ -1,5 +1,5 @@
 export interface Trade{
-    action:string,
+    action?:string,
     userId:string,
     orderId:string,
     asset:string,

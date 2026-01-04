@@ -1,5 +1,6 @@
-import express from "express";
+    import express from "express";
 import { createClient } from "redis"
+import type { CloseOrder, CreateOrder } from "./types";
 
 const router = express.Router();
 const redisClient = createClient();
@@ -12,21 +13,10 @@ await subcribe.connect();
 
 const DECIMAL_VALUE=10000;
 
-interface CreateOrder{
-    action:string,
-    userId:string,
-    orderId:string,
-    asset:string,
-    margin:number,
-    type:"buy"| "sell",
-    leverage:number,
-    status:"open"|"closed"
-}
-
 router.post("/trade/create", async (req:express.Request, res:express.Response)=>{
     const {userId, asset, type, margin, leverage} = req.body;
     const orderId = crypto.randomUUID();
-    
+
     if(!userId || !asset || !margin || !leverage || !type){
         return res.status(404).json({msg:"Missing details to create the order!"})
     }
@@ -52,7 +42,6 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
             subcribe.unsubscribe(`${orderId}`);
             resolve(data)
         })
-
     })
         
     //adding the order in the stream to let the engine pickup from there
@@ -73,6 +62,49 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
         return res.status(400).json({msg:"order failed due to insufficient balance"})
     }
 
+})
+
+router.post("/trade/close", async(req:express.Request,res:express.Response)=>{
+    const {userId, orderId} = req.body;
+    if(!userId || !orderId){
+        return res.status(400).json({msg:"Missing details to close the order"})
+    }
+
+    const closeOrder:CloseOrder = {
+        action:"CLOSE_ORDER",
+        userId,
+        orderId,
+        status:"close"
+    }
+    //defining new promise here to avoid the res hangout issue
+    const responsePromise = new Promise(async(resolve, reject)=>{
+        const timeout = setTimeout(()=>{
+            reject(new Error("Timeout"))
+        }, 5000);
+
+        await subcribe.subscribe(`${orderId}`,(data)=>{
+            clearTimeout(timeout)
+            subcribe.unsubscribe(`${orderId}`);
+            resolve(data)
+        })
+    })
+
+    await client.XADD(
+        "trade",
+        "*",
+        {
+            data:JSON.stringify(closeOrder)
+        }
+    )
+
+    const result:any = await responsePromise;
+    const parsedResult = JSON.parse(result);
+
+    if(parsedResult.reqStatus ==="success"){
+        return res.status(200).json({msg:"order closed successfully"})
+    }else{
+        return res.status(400).json({msg:"open order not found"})
+    }
 })
 
 export default router;
