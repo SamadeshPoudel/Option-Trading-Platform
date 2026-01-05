@@ -14,6 +14,73 @@ const openOrders = new Map<string, any[]>(); //userId as key and orders as array
 
 const DECIMAL_VALUE=10000;
 
+const liquidateTrade = (priceUpdate:any)=>{
+    for(const [userId, orders] of openOrders){
+        for(const order of orders){
+            if(order.leverage > 1 && order.type ==="buy"){
+                if(priceUpdate.askWithSpread < order.openPrice){
+                    const changePercentage = ((order.openPrice - priceUpdate.askWithSpread )/order.openPrice)*100;
+                    console.log("change percent", changePercentage)
+                    console.log("leverage percent:",90/order.leverage );
+                    if(changePercentage > 90/order.leverage){
+                        console.log("trying to close order");
+                        closeOrder({userId, orderId:order.orderId})
+                    }
+                }
+            }
+        }
+    }
+}
+
+const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
+    if(openOrders.has(userId)){
+        const userOrders = openOrders.get(userId)!;
+        const orderIndex = userOrders?.findIndex(element=>element.orderId === orderId)!;
+
+        if(orderIndex != -1){
+        const order = userOrders[orderIndex];
+        userOrders?.splice(orderIndex,1)
+
+        const closePrice = order.type==="buy"
+        ? latestPrice.get(order.asset)?.ask
+        : latestPrice.get(order.asset)?.bid
+
+        const pnl = order.type === "buy"
+        ? ((closePrice!) - (order.openPrice)) * order.quantity
+        : ((order.openPrice) - (closePrice!)) * order.quantity;
+
+        const closedOrder = {
+            ...order,
+            closePrice,
+            pnl,
+            status:"close",
+            reqStatus:"success"
+            }
+            console.log("closedOrder:", closedOrder)
+
+        await client.XADD(
+            "engine-response",
+            "*",
+            {
+                data:JSON.stringify(closedOrder)
+            }
+        )
+    
+            await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
+        }else{
+             const closedOrder = {
+            reqStatus:"failed"
+            }
+        await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
+        }
+    }else{
+        const closedOrder = {
+            reqStatus:"failed"
+        }
+        await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
+    }
+}
+
 while(true){
     const orderReqFromHttpServer:any = await client.XREAD(
        {key:"trade", id:'$'},
@@ -46,6 +113,7 @@ while(true){
                             type:data.type,
                             quantity:exposure/openPrice!,
                             margin:data.margin,
+                            leverage:data.leverage,
                             status:data.status,
                             reqStatus:"success"
                         }
@@ -70,6 +138,7 @@ while(true){
                             type:data.type,
                             quantity:exposure/openPrice!,
                             margin:data.margin,
+                            leverage:data.leverage,
                             status:data.status,
                             reqStatus:"failed"
                         }
@@ -84,52 +153,8 @@ while(true){
                     const orderId = data.orderId;
                     const status = data.status;
                     console.log("checking the logs of close order in engine:", userId, orderId, status);
-                    if(openOrders.has(userId)){
-                        const userOrders = openOrders.get(userId)!;
-                        const orderIndex = userOrders?.findIndex(element=>element.orderId === orderId)!;
-
-                        if(orderIndex != -1){
-                            const order = userOrders[orderIndex];
-                            userOrders?.splice(orderIndex,1)
-
-                            const closePrice = order.type==="buy"
-                            ? latestPrice.get(order.asset)?.ask
-                            : latestPrice.get(order.asset)?.bid
-
-                            const pnl = order.type === "buy"
-                            ? ((closePrice!) - (order.openPrice)) * order.quantity
-                            : ((order.openPrice) - (closePrice!)) * order.quantity;
-
-                            const closedOrder = {
-                                ...order,
-                                closePrice,
-                                pnl,
-                                status:"close",
-                                reqStatus:"success"
-                             }
-                             console.log("closedOrder:", closedOrder)
-
-                            await client.XADD(
-                                "engine-response",
-                                "*",
-                                {
-                                    data:JSON.stringify(closedOrder)
-                                }
-                            )
-    
-                            await publisher.publish(`${data.orderId}`, JSON.stringify(closedOrder))
-                        }else{
-                            const closedOrder = {
-                            reqStatus:"failed"
-                            }
-                        await publisher.publish(`${data.orderId}`, JSON.stringify(closedOrder))
-                        }
-                    }else{
-                        const closedOrder = {
-                            reqStatus:"failed"
-                        }
-                        await publisher.publish(`${data.orderId}`, JSON.stringify(closedOrder))
-                    }
+                    closeOrder({userId, orderId})
+                    
                 }
 
                 else if(data.action === "PRICE_UPDATE"){
@@ -138,6 +163,7 @@ while(true){
                         bid:data.bidWithSpread, 
                         decimal:data.decimal
                     })
+                    liquidateTrade(data)
                 }
             }
         }

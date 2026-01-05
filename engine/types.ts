@@ -6,6 +6,7 @@ export interface Trade{
     openPrice:number,
     quantity:number,
     margin:number,
+    leverage:number,
     type:"buy"|"sell",
     status:"open"|"closed",
     reqStatus:"success"|"failed"
