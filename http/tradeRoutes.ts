@@ -1,4 +1,4 @@
-    import express from "express";
+import express from "express";
 import { createClient } from "redis"
 import type { CloseOrder, CreateOrder } from "./types";
 
@@ -61,7 +61,6 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
     }else if(parsedResult.reqStatus==='failed'){
         return res.status(400).json({msg:"order failed due to insufficient balance"})
     }
-
 })
 
 router.post("/trade/close", async(req:express.Request,res:express.Response)=>{
@@ -104,6 +103,51 @@ router.post("/trade/close", async(req:express.Request,res:express.Response)=>{
         return res.status(200).json({msg:"order closed successfully"})
     }else{
         return res.status(400).json({msg:"open order not found"})
+    }
+})
+
+router.get("/balance", async(req:express.Request, res:express.Response)=>{
+    try {
+        const {userId} = req.body;
+        if(!userId){
+            return res.status(404).json({msg:"Missing userId!"})
+        }
+
+        const responsePromise = new Promise(async(resolve, reject)=>{
+            const timeout = setTimeout(()=>{
+                reject(new Error("Timeout"))
+            }, 5000);
+
+            await subcribe.subscribe(`${userId}`, (data)=>{
+                clearTimeout(timeout);
+                subcribe.unsubscribe(`${userId}`);
+                resolve(data);
+            })
+        })
+
+        const payload = {
+            action:"CHECK_BALANCE",
+            userId
+        }
+
+        await client.XADD(
+            "trade",
+            "*",
+            {
+                data:JSON.stringify(payload)
+            }
+        )
+
+        const result:any = await responsePromise;
+        const parsedResult = JSON.parse(result);
+        console.log("checking parseResult", parsedResult);
+        if(parsedResult.reqStatus==='success'){
+            return res.status(200).json({data:parsedResult.balance, msg:"Balance fetched successfully!"})
+        }
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({msg:"Internal server error!"})
     }
 })
 

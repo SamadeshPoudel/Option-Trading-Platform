@@ -174,6 +174,19 @@ async function listenToOrders() {
                         })
                         liquidateTrade(data)
                     }
+
+                    else if(data.action ==="CHECK_BALANCE"){
+                        const userId = data.userId;
+                        const balance = userBalance.get(userId);
+
+                        const checkedBalance = {
+                            action:data.action,
+                            balance,
+                            reqStatus:"success"
+                        }
+
+                        await publisher.publish(`${userId}`, JSON.stringify(checkedBalance))
+                    }
                 }
             }
         }
