@@ -23,7 +23,7 @@ const liquidateTrade = (priceUpdate:any)=>{
                     // console.log("change percent", changePercentage)
                     // console.log("leverage percent:",90/order.leverage );
                     if(changePercentage > 90/order.leverage){
-                        console.log("trying to close order");
+                        // console.log("trying to close order");
                         closeOrder({userId, orderId:order.orderId})
                     }
                 }
@@ -56,8 +56,16 @@ const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
                 status:"close",
                 reqStatus:"success"
             }
-            console.log("closedOrder:", closedOrder)
-            
+            console.log("checking the whole closedPrice:", closedOrder)
+            console.log("checking closedOrder properties:", closedOrder.closePrice);
+            console.log("checking closedOrder quantity:", closedOrder.quantity);
+            // console.log("checking closedOrder quantity:", closedOrder.quantity);
+
+            //take the current userBalance and then add with the margin*pnl to give them their balance after they close the order
+            const balance = userBalance.get(userId)!;
+            const balanceAfterClosingOrder = balance + (closedOrder.margin + closedOrder.pnl)
+            userBalance.set(userId, balanceAfterClosingOrder);
+
             await client.XADD(
                 "engine-response",
                 "*",
@@ -98,7 +106,7 @@ async function listenToOrders() {
                         if(data.action === "CREATE_ORDER"){
                             const userId = data.userId;
                             if(!userBalance.has(userId)) userBalance.set(userId, 500*DECIMAL_VALUE)
-                                const balance = userBalance.get(data.userId)?? 0
+                            const balance = userBalance.get(data.userId)?? 0
                             const exposure = (data.margin)* data.leverage //margin * leverage
                             
                             const openPrice = data.type ==="buy"
@@ -121,7 +129,7 @@ async function listenToOrders() {
                             }
                             userBalance.set(data.userId, balance - data.margin)
                             
-                            console.log("users balance after placing order",userBalance)
+                            // console.log("users balance after placing order",userBalance)
                             
                             if(!openOrders.has(userId)) openOrders.set(userId, []);
                             openOrders.get(userId)?.push(createdOrder)
