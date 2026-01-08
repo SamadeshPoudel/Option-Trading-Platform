@@ -187,6 +187,18 @@ async function listenToOrders() {
 
                         await publisher.publish(`${userId}`, JSON.stringify(checkedBalance))
                     }
+
+                    else if(data.action==="CHECK_OPEN_ORDERS"){
+                        const userId = data.userId;
+                        const orders = openOrders.get(userId)
+                        const checkOpenOrders = {
+                            action:data.action,
+                            openOrders:orders,
+                            reqStatus:"success"
+                        }
+
+                        await publisher.publish(`${userId}`, JSON.stringify(checkOpenOrders))
+                    }
                 }
             }
         }

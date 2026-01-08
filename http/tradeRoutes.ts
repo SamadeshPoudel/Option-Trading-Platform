@@ -151,4 +151,45 @@ router.get("/balance", async(req:express.Request, res:express.Response)=>{
     }
 })
 
+router.get("/open-orders", async(req:express.Request, res:express.Response)=>{
+    try {
+        const {userId} = req.body;
+        if(!userId){
+            return res.status(404).json({msg:"Missing userId!"})
+        }
+        const responsePromise = new Promise(async(resolve, reject)=>{
+            const timeout = setTimeout(()=>{
+                reject(new Error("Timeout"))
+            }, 5000);
+
+            await subcribe.subscribe(`${userId}`, (data)=>{
+                clearTimeout(timeout);
+                subcribe.unsubscribe(`${userId}`);
+                resolve(data);
+            })
+        })  
+
+        const payload = {
+            action:"CHECK_OPEN_ORDERS",
+            userId
+        }
+
+        await client.XADD(
+            "trade",
+            "*",
+            {data:JSON.stringify(payload)}
+        )
+
+        const result:any = await responsePromise;
+        const parsedResult = JSON.parse(result);
+
+        if(parsedResult.reqStatus==="success"){
+            return res.status(200).json({data:parsedResult.openOrders, msg:"open orders fetched successfully!"})
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json("Internal server error!")
+    }
+})
+
 export default router;
