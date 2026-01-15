@@ -28,7 +28,7 @@ model ClosedOrders{
   type String
   asset String
   margin Int
-  leverage String 
+  leverage Int
   quantity Float
   openPrice Int
   closePrice Int
