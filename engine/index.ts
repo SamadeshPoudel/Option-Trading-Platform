@@ -23,7 +23,6 @@ const liquidateTrade = (priceUpdate:any)=>{
                     // console.log("change percent", changePercentage)
                     // console.log("leverage percent:",90/order.leverage );
                     if(changePercentage > 90/order.leverage){
-                        // console.log("trying to close order");
                         closeOrder({userId, orderId:order.orderId})
                     }
                 }
@@ -56,10 +55,6 @@ const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
                 status:"close",
                 reqStatus:"success"
             }
-            console.log("checking the whole closedPrice:", closedOrder)
-            console.log("checking closedOrder properties:", closedOrder.closePrice);
-            console.log("checking closedOrder quantity:", closedOrder.quantity);
-            // console.log("checking closedOrder quantity:", closedOrder.quantity);
 
             //take the current userBalance and then add with the margin*pnl to give them their balance after they close the order
             const balance = userBalance.get(userId)!;
@@ -210,28 +205,22 @@ async function listenToOrders() {
 }
 }
 const takeSnapshot = async()=>{
-    // console.log("check 2")
     const snapShot = {
         openOrders: Array.from(openOrders.entries()),
         userBalance: Array.from(userBalance.entries())
     }
     await Bun.write("./snapshot.json", JSON.stringify(snapShot))
-    // console.log("check 3")
     
 }
 
-// console.log("check 4")
 const loadSnapshot=async ()=>{
-    // console.log("check 5")
     const data = await Bun.file("./snapshot.json").json()
-    // console.log("checking data of json file", data)
     for (const [key, value] of data.openOrders as [string, any[]][]) {
         openOrders.set(key, value);
     }
     for (const [key, value] of data.userBalance as [string, number][]) {
         userBalance.set(key, value);
     }
-    // console.log("check 6")
     console.log("snapshot loaded",openOrders)
     console.log("snapshot loaded", userBalance)
 }

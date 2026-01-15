@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User{
@@ -23,14 +23,16 @@ model User{
 }
 
 model ClosedOrders{
-  tradeId String @id @default(uuid())
+  orderId String @id @default(uuid())
   userId String
   type String
   asset String
-  margin String
+  margin Int
   leverage String 
+  quantity Float
   openPrice Int
   closePrice Int
   pnl Float
+  status String
   user User @relation(fields: [userId], references: [id])
 }

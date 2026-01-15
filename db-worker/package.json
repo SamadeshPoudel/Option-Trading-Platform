@@ -9,9 +9,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "@types/redis": "^4.0.11",
     "dotenv": "^17.2.3",
-    "@prisma/client": "^6.17.1"
-
+    "redis": "^5.10.0"
   },
   "private": true,
   "type": "module"
