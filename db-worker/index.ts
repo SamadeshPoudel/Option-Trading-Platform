@@ -67,9 +67,11 @@ while (true) {
 
 async function saveToDB(data: any) {
     try {
+        console.log("check check!");
+        console.log("lets check data!", data);
         const closedOrder = await prisma.closedOrders.create({
             data: {
-                userId: "03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
+                userId: data.userId,
                 orderId: data.orderId,
                 type: data.type,
                 asset: data.asset,
@@ -85,6 +87,6 @@ async function saveToDB(data: any) {
 
         console.log("closed orders saved to db:", closedOrder)
     } catch (error) {
-        console.error("Failed saving to DB!")
+        console.error("Failed saving to DB!", error);
     }
 }

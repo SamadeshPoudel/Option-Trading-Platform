@@ -1,6 +1,9 @@
 import express from "express";
 import { createClient } from "redis"
 import type { CloseOrder, CreateOrder } from "./types";
+import { PrismaClient } from "./generated/prisma/client";
+
+const prisma = new PrismaClient();
 
 const router = express.Router();
 const redisClient = createClient();
@@ -189,6 +192,24 @@ router.get("/open-orders", async(req:express.Request, res:express.Response)=>{
     } catch (error) {
         console.error(error);
         return res.status(500).json("Internal server error!")
+    }
+})
+
+router.get("/closed-orders", async(req:express.Request, res:express.Response)=>{
+    try {
+        const {userId} = req.body;
+        if(!userId){
+            return res.status(404).json({msg:"Missing userId!"})
+        } 
+        const closedOrder = await prisma.closedOrders.findMany({
+            where:{
+                userId
+            }
+        })
+        return res.status(200).json({msg:"closed orders fetched successfully", closedOrder})
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({msg:"Internal server error!"})
     }
 })
 
