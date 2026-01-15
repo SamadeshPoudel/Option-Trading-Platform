@@ -1,1 +1,1 @@
-{"openOrders":[["1",[{"userId":"1","orderId":"ab814db1-cc9b-4ad2-ba72-5e497f6bcd36","asset":"SOL","openPrice":1445944,"type":"buy","quantity":6.915897157842904,"margin":1000000,"leverage":"10","status":"open","reqStatus":"success"}]]],"userBalance":[["1",2966900.55274658]]}
+{"openOrders":[["1",[]]],"userBalance":[["1",3933794.153051986]]}

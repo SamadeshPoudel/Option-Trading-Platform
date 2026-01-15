@@ -1,41 +1,90 @@
 import { PrismaClient } from "./generated/prisma/client";
-import {createClient} from "redis";
+import { createClient } from "redis";
 const client = createClient();
 const prisma = new PrismaClient();
 await client.connect();
 
-const closedOrdersFromEngine:any = await client.XREAD(
-    {key:"engine-response", id:'$'},
-    {BLOCK:0, COUNT:1}
-)
+const STREAM_NAME = "engine-response"
+const CONSUMER_GROUP = "db-worker-group"
+const CONSUMER_NAME = `db-worker-${Date.now()}`
 
-if(closedOrdersFromEngine){
-    for(const obj of closedOrdersFromEngine){
-        for(const message of obj.messages){
-            const data = JSON.parse(message.message.data);
-            console.log("this is data", data);
+export type RedisStreamMessage<T = Record<string, string>> = {
+    id: string
+    message: T
+}
 
+export type RedisStreamResponse<T = Record<string, string>> = Array<{
+    name: string
+    messages: RedisStreamMessage<T>[]
+}>
 
-        const closedOrder =  await prisma.closedOrders.create({
-                data: {
-                    userId:"03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
-                    orderId:data.orderId,
-                    type:data.type,
-                    asset:data.asset,
-                 margin:data.margin,
-                 leverage:data.leverage, 
-                 quantity:data.quantity,
-                 openPrice:data.openPrice,
-                 closePrice:data.closePrice,
-                 pnl:data.pnl,
-                 status:data.status
-                    }
-                })
-
-                console.log("closed orders saved to db:", closedOrder)
+async function initializeConsumerGroup() {
+    try {
+        await client.xGroupCreate(
+            STREAM_NAME,
+            CONSUMER_GROUP,
+            "$",
+            { MKSTREAM: true }
+        );
+        console.log("Consumer group created!")
+    } catch (error: any) {
+        if (error.message.includes("BUSYGROUP")) {
+            console.log("Consumer group already exists");
+        } else {
+            throw error;
         }
     }
 }
-// console.log(closedOrdersFromEngine)
+await initializeConsumerGroup();
 
-// console.log("user", user)
+
+while (true) {
+    try {
+        const closedOrdersFromEngine = await client.xReadGroup(
+            CONSUMER_GROUP,
+            CONSUMER_NAME,
+            [{ key: "engine-response", id: '>' }],
+            { BLOCK: 0, COUNT: 1 }
+        )
+
+        if (!closedOrdersFromEngine) continue;
+
+        if (closedOrdersFromEngine) {
+            for (const obj of closedOrdersFromEngine as RedisStreamResponse) {
+                for (const message of obj.messages) {
+                    const data = JSON.parse(message.message.data!);
+
+                    saveToDB(data)
+
+                    await client.xAck(STREAM_NAME, CONSUMER_GROUP, message.id)
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error reading messages from stream!", error)
+    }
+}
+
+async function saveToDB(data: any) {
+    try {
+        const closedOrder = await prisma.closedOrders.create({
+            data: {
+                userId: "03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
+                orderId: data.orderId,
+                type: data.type,
+                asset: data.asset,
+                margin: data.margin,
+                leverage: data.leverage,
+                quantity: data.quantity,
+                openPrice: data.openPrice,
+                closePrice: data.closePrice,
+                pnl: data.pnl,
+                status: data.status
+            }
+        })
+
+        console.log("closed orders saved to db:", closedOrder)
+    } catch (error) {
+        console.error("Failed saving to DB!")
+    }
+}
