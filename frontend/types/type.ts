@@ -1,0 +1,1 @@
+export type Asset = "ETH_USDC" | "SOL_USDC" | "BTC_USDC"
