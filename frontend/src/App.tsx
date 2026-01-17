@@ -1,4 +1,5 @@
 import Chart from "./components/CandlestickChart"
+import OrderPanel from "./components/OrderPanel"
 
 function App() {
 
@@ -28,8 +29,8 @@ function App() {
         </div>
 
         {/* right  */}
-        <div className="flex-1 bg-blue-400">
-          order panel
+        <div className="flex-1">
+          <OrderPanel />
         </div>
       </div>
     </div>
