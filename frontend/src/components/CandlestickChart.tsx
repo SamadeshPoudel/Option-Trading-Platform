@@ -7,7 +7,9 @@ import {
   type Time,
   type ISeriesApi,
 } from "lightweight-charts";
-import { useAssetStore } from "../../store/useStore";
+import { useAssetStore } from "store/useStore";
+// import { useAssetStore } from "../../store/useStore";
+// useAssetStore
 
 
 export type Candle = {
@@ -93,17 +95,20 @@ export default function Chart({ duration, startTime }: Props) {
       ws.send(
         JSON.stringify({
           method: "SUBSCRIBE",
-          params: [`klines.${duration}."SOL_USDC`], //${selectedSymbol}
+          params: [`klines.1m.SOL_USDC`], // ${duration} ${selectedSymbol}
         })
       );
     };
 
     ws.onmessage = (event) => {
+      console.log("ayo ayo")
       const data = JSON.parse(event.data);
+      console.log("checking data from ws in candles", data)
 
       // if (data.topic?.startsWith("klines")) {
         const kline = data.data;
-          // console.log("kline data",kline)
+        console.log("checking kline", kline)
+          // console.log("kline data",kline)  
         const newCandle:CandlestickData = {
           time: Math.floor(new Date(kline.t).getTime() / 1000) as Time,
           open: parseFloat(kline.o),
@@ -136,12 +141,12 @@ export default function Chart({ duration, startTime }: Props) {
   useEffect(() => {
     if (!chartReady) return;
 
-    async function fetchData() {
+    async function fetchData() {  
       setIsLoading(true);
       try {
         const res = await fetch(
           // `${import.meta.env.VITE_BACKEND_BASE_URL}/candles/market?symbol=${selectedSymbol}&interval=${duration}&startTime=${startTime}`,
-          `${import.meta.env.VITE_BACKEND_BASE_URL}/api/candles?symbol=SOL_USDC&interval=1m&startTime=1768651501`,
+          `${import.meta.env.VITE_BACKEND_BASE_URL}/api/candles?symbol=SOL_USDC&interval=1m&startTime=1768897800`,
 
           {
             headers: {

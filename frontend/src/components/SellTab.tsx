@@ -50,7 +50,7 @@ const SellTab = () => {
         </div>
         
         <div className="m-2">
-        <Button variant="outline" className="text-black bg-green-400 w-full hover:bg-green-400 hover:text-white border-none cursor-pointer">
+        <Button variant="outline" className="text-black bg-red-600 w-full hover:bg-green-400 hover:text-white border-none cursor-pointer">
             Sell for 150
         </Button>
         </div>

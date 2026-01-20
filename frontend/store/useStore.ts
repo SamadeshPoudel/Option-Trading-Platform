@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-// import { Asset } from '../types/type';
 
 export type Asset = "ETH_USDC" | "SOL_USDC" | "BTC_USDC"
 export type Price = {
