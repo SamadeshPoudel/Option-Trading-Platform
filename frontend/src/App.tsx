@@ -1,5 +1,6 @@
 import Chart from "./components/CandlestickChart"
 import OrderPanel from "./components/OrderPanel"
+import { OrderTable } from "./components/OrderTable"
 
 function App() {
 
@@ -19,13 +20,13 @@ function App() {
       <div className="flex p-2 gap-2">
         {/* left  */}
         <div className="flex flex-col flex-3 gap-2">
+          
           {/* chart  */}
           <div className="h-125">
             <Chart duration="30m" startTime={1768651501} />
           </div>
-          <div className="history bg-green-500 h-40">
-          open positions
-          </div>
+
+          <OrderTable />
         </div>
 
         {/* right  */}

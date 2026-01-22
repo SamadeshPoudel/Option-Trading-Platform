@@ -6,7 +6,7 @@ const BuySellTab = () => {
   return (
     <div className="flex justify-between flex-col ">
    <Tabs defaultValue="buy" className="w-[400px] flex justify-between">
-  <TabsList>
+  <TabsList className="w-full">
     <TabsTrigger 
       value="buy" 
       className="text-green-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"

@@ -1,8 +1,12 @@
-import WebSocket from "ws"
+import WebSocket, { WebSocketServer } from "ws"
 import { createClient } from "redis"
 
+//listen to backpack for the latest price
 const ws = new WebSocket(process.env.BACKPACK_API!)
 const client = createClient();
+
+//creating wss to send ws data to frontend from this poller ws
+const wss = new WebSocketServer({port:8080})
 
 interface Payload{
     action:string,
@@ -33,13 +37,12 @@ ws.on('message',async(event)=>{
 
     const payload:Payload = {
         action:"PRICE_UPDATE",
-        asset:(stream.data.s).split("_")[0],
+        asset:(stream.data.s).split("_")[0], //SOL_USDC
         askWithSpread:Math.trunc(askWithSpread*10000),
         bidWithSpread:Math.trunc(bidWithSpread*10000),
         decimal:4
 
     }
-
 
     await client.XADD(
         "trade", //stream name
@@ -49,13 +52,54 @@ ws.on('message',async(event)=>{
         }
     )
 
-    console.log("Asset:", payload.asset);
-    console.log("Ask with spread",payload.askWithSpread);
-    console.log("Bid with spread",payload.bidWithSpread);
+    if(!subscriptionTable.has(payload.asset)){
+        subscriptionTable.set(payload.asset, [])
+        return;
+    }
+    subscriptionTable.get(payload.asset)?.forEach(ws=> ws.send(JSON.stringify(payload)))
 
-    console.log("stream pushed to redis stream")
-    console.log("\n")
+    // console.log("Asset:", payload.asset);
+    // console.log("Ask with spread",payload.askWithSpread);
+    // console.log("Bid with spread",payload.bidWithSpread);
+
+    // console.log("stream pushed to redis stream")
+    // console.log("\n")
 })
+
+const subscriptionTable = new Map<string, WebSocket[]>() //key is SOL_USDC 
+
+//to send the data to frontend
+wss.on('connection', function connection(ws) {
+    let parsedData:any;
+  ws.on('error', console.error);
+
+  ws.on('message', function message(data) {
+    console.log('received: %s', data);
+     parsedData = JSON.parse(data.toString())
+    console.log("parsedDATA:",parsedData)
+    if(parsedData.action === "SUBSCRIBE"){
+        if(!subscriptionTable.has(parsedData.asset)){
+        subscriptionTable.set(parsedData.asset, [])
+    }
+    subscriptionTable.get(parsedData.asset)?.push(ws)
+    // ws.send(`subscribed to ${parsedData.asset}`)
+    } else{
+        const filtered = subscriptionTable.get(parsedData.asset)?.filter(item => item !== ws)
+        subscriptionTable.set(parsedData.asset, filtered || [])
+        // ws.send(`Unsubscribed to ${parsedData.asset}`)
+    }
+  });
+
+  ws.on("close",()=>{
+   const filtered = subscriptionTable.get(parsedData.asset)?.filter(item => item !== ws)
+   subscriptionTable.set(parsedData.asset, filtered || [])
+//    ws.send(`Unsubscribed to ${parsedData.asset}`)
+
+  })
+
+//   ws.send('something');
+});
+
 
 /*
 sample data from backpack api

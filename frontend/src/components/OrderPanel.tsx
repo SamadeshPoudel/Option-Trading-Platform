@@ -10,13 +10,20 @@ import {
 import PriceBoard from "./PriceBoardDropdown"
 import BuySellTab from "./BuySellTab"
 import SellTab from "./SellTab"
+import { useAssetStore } from "store/useStore"
 
 
 const OrderPanel = () => {
+
+
+
   return (
     <Card className="bg-[#14151B]">
+
+
+
     {/*PriceBoard to show real-time price of an asset  */}
-    <PriceBoard />
+    <PriceBoard  />
     {/* buy and sell tab  */}
     <BuySellTab />
     
