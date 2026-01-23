@@ -25,9 +25,6 @@ export function OrderTable() {
   const fetchOrders = useTradeStore(state => state.fetchOrders);
   const livePrices = useAssetStore(state => state.livePrices);
 
-  console.log("open Trades", openTrades)
-  console.log("closed Trades", closedTrades);
-
   useEffect(() => {
     fetchOrders()
   }, [])
@@ -157,7 +154,7 @@ export function OrderTable() {
 
                       return <span className={color}>{sign}${absValue}</span>;
                     })()}</TableCell>
-                    <TableCell className="text-right">{Date.now()}</TableCell>
+                    <TableCell className="text-right">23420948</TableCell>
                   </TableRow>
                 ))
               ) : (

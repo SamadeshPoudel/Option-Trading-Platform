@@ -264,12 +264,15 @@ router.get("/closed-orders", async(req:express.Request, res:express.Response)=>{
 })
 
 router.get("/candles", async(req:express.Request, res:express.Response)=>{
-    console.log("reached in candles!")
-     const { interval, symbol, startTime } = req.query;
-  const r = await fetch(`https://api.backpack.exchange/api/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${startTime}`)
-  const json = await r.json();
-  // res.setHeader("Access-Control-Allow-Origin", "*");
-  res.json(json);
+    const { interval, symbol, startTime, endTime } = req.query;
+    let url = `https://api.backpack.exchange/api/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${startTime}`;
+
+    if (endTime) {
+      url += `&endTime=${endTime}`;
+    }
+    const r = await fetch(url);
+    const json = await r.json();
+    res.json(json);
 })
 
 export default router;

@@ -28,7 +28,22 @@ type Order = {
   status?:string
 }
 
+type OrderState = {
+  openTrades: Order[],
+  closedTrades: any[],
+  setOpenTrades: (trade:Order)=>void;
+  fetchOrders:()=>void;
+  removeTrade: (id:string)=> void; 
+  clearTrade: ()=> void;
+  loading: boolean;
+}
 
+type ChartState = {
+  selectedInterval: string;
+  selectedPeriod: string | null; 
+  setSelectedInterval: (interval: string) => void;
+  setSelectedPeriod: (period: string | null) => void; 
+};
 
 export const useAssetStore = create<AssetState>((set) => ({
   selectedSymbol: "SOL",
@@ -45,15 +60,6 @@ export const useAssetStore = create<AssetState>((set) => ({
 
 }));
 
-type OrderState = {
-  openTrades: Order[],
-  closedTrades: any[],
-  setOpenTrades: (trade:Order)=>void;
-  fetchOrders:()=>void;
-  removeTrade: (id:string)=> void; 
-  clearTrade: ()=> void;
-  loading: boolean;
-}
 
 export const useTradeStore = create<OrderState>((set)=>({
   openTrades:[],
@@ -90,4 +96,15 @@ export const useTradeStore = create<OrderState>((set)=>({
     clearTrade:()=>set({
     openTrades: []
   })
+}))
+
+export const useChartStore = create<ChartState>((set)=>({
+  selectedInterval:"1m", //1m
+  selectedPeriod:null, //1768897800
+  setSelectedInterval:(interval)=>{
+    set({selectedInterval:interval, selectedPeriod:null})
+  },
+  setSelectedPeriod:(period)=>{
+    set({selectedPeriod:period})
+  }
 }))

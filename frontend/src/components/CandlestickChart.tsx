@@ -1,16 +1,14 @@
 import { toast } from "sonner";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   type CandlestickData,
   CandlestickSeries,
   createChart,
   type Time,
   type ISeriesApi,
+  type IChartApi,
 } from "lightweight-charts";
-import { useAssetStore } from "store/useStore";
-// import { useAssetStore } from "../../store/useStore";
-// useAssetStore
-
+import { useAssetStore, useChartStore } from "store/useStore";
 
 export type Candle = {
   time: Time;
@@ -19,34 +17,117 @@ export type Candle = {
   low: number;
   close: number;
 };
- type RawCandle = {
-  start: string,
-  open:string,
-  high:string,
-  low:string,
-  close:string
- }
 
-type Props = {
-  duration: string;
-  startTime: number;
+type RawCandle = {
+  start: string;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
 };
 
+// Get number of candles to fill the chart view based on interval
+const getCandlesForView = (interval: string, chartWidth: number): number => {
+  // Approximate candle width is ~10px, so calculate how many fit
+  const candlesVisible = Math.floor(chartWidth / 10);
+  // Add some buffer for scrolling
+  return Math.max(candlesVisible * 2, 100);
+};
 
-export default function Chart({ duration, startTime }: Props) {
+// Calculate start time based on interval and number of candles needed
+const calculateStartTime = (interval: string, numCandles: number): number => {
+  const now = Math.floor(Date.now() / 1000);
+  const intervalSeconds = getIntervalSeconds(interval);
+  return now - (numCandles * intervalSeconds);
+};
+
+// Helper function to get interval in seconds
+function getIntervalSeconds(interval: string): number {
+  switch (interval) {
+    case "1m": return 60;
+    case "3m": return 180;
+    case "5m": return 300;
+    case "30m": return 1800;
+    case "1h": return 3600;
+    case "4h": return 14400;
+    case "1d": return 86400;
+    default: return 60;
+  }
+}
+
+export default function Chart() {
   const ref = useRef<HTMLDivElement | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const [chartReady, setChartReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [height, setHeight] = useState<number>(500)
+  const [chartWidth, setChartWidth] = useState(800);
+  const loadedRangeRef = useRef<{ from: number; to: number } | null>(null);
+  const isFetchingRef = useRef(false);
 
   const selectedSymbol = useAssetStore((state) => state.selectedSymbol);
+  const selectedInterval = useChartStore((state) => state.selectedInterval);
+  const selectedPeriod = useChartStore((state) => state.selectedPeriod);
 
+  // Fetch candles for a given time range
+  const fetchCandles = useCallback(async (startTime: number, endTime?: number): Promise<Candle[]> => {
+    if (!selectedInterval || !selectedSymbol) return [];
+    if (isFetchingRef.current) return [];
+    
+    isFetchingRef.current = true;
+    setIsLoading(true);
+    
+    try {
+      let url = `${import.meta.env.VITE_BACKEND_BASE_URL}/api/candles?symbol=${selectedSymbol}_USDC&interval=${selectedInterval}&startTime=${startTime}`;
+      if (endTime) {
+        url += `&endTime=${endTime}`;
+      }
+
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        toast.error(errorData.message || "Failed to fetch data");
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+
+      const json = await res.json();
+      const dataArray = Array.isArray(json) ? json : json.data || [];
+
+      if (dataArray.length === 0) {
+        return [];
+      }
+
+      const candles: Candle[] = dataArray.map((d: RawCandle) => ({
+        time: Math.floor(new Date(d.start).getTime() / 1000) as Time,
+        open: parseFloat(d.open),
+        high: parseFloat(d.high),
+        low: parseFloat(d.low),
+        close: parseFloat(d.close),
+      }));
+
+      candles.sort((a, b) => Number(a.time) - Number(b.time));
+      return candles;
+    } catch (err) {
+      console.error("Failed to load chart data:", err);
+      return [];
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [selectedInterval, selectedSymbol]);
+
+  // Initialize chart
   useEffect(() => {
     if (!ref.current) return;
 
-    const newHeight = window.innerHeight < 500 ? 300 : 500;
-    setHeight(newHeight);
+    const width = ref.current.clientWidth;
+    setChartWidth(width);
+    
+    const height = window.innerHeight < 500 ? 300 : 500;
+    
     const chart = createChart(ref.current, {
       layout: { background: { color: "#171717" }, textColor: "#94a3b8" },
       grid: {
@@ -56,9 +137,11 @@ export default function Chart({ duration, startTime }: Props) {
       rightPriceScale: { borderColor: "#0b1220" },
       timeScale: { borderColor: "#0b1220" },
       crosshair: { mode: 1 },
-      width: ref.current.clientWidth,
+      width: width,
       height: height,
     });
+
+    chartRef.current = chart;
 
     const series = chart.addSeries(CandlestickSeries, {
       upColor: "#039e64",
@@ -73,21 +156,84 @@ export default function Chart({ duration, startTime }: Props) {
     setChartReady(true);
 
     const onResize = () => {
-      chart.applyOptions({
-        width: ref.current!.clientWidth,
-        height: ref.current!.clientHeight,
-      });
+      if (ref.current) {
+        const newWidth = ref.current.clientWidth;
+        setChartWidth(newWidth);
+        chart.applyOptions({
+          width: newWidth,
+          height: ref.current.clientHeight,
+        });
+      }
     };
+    
     window.addEventListener("resize", onResize);
 
     return () => {
       window.removeEventListener("resize", onResize);
       chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
     };
   }, []);
 
+  // Handle scrolling to load more data (only when period is null/auto)
   useEffect(() => {
-    if (!chartReady || !selectedSymbol) return;
+    if (!chartReady || !chartRef.current || selectedPeriod !== null) return;
+
+    const timeScale = chartRef.current.timeScale();
+    
+    const handleVisibleRangeChange = async () => {
+      const visibleRange = timeScale.getVisibleLogicalRange();
+      if (!visibleRange || !loadedRangeRef.current) return;
+
+      // Check if user scrolled near the left edge
+      if (visibleRange.from < 10) {
+        const intervalSeconds = getIntervalSeconds(selectedInterval);
+        const newStartTime = loadedRangeRef.current.from - (100 * intervalSeconds);
+        
+        const olderCandles = await fetchCandles(newStartTime, loadedRangeRef.current.from - 1);
+        
+        if (olderCandles && olderCandles.length > 0) {
+          const existingData = (seriesRef.current?.data() || []) as Candle[];
+          const mergedData = [...olderCandles, ...existingData];
+          
+          // Remove duplicates by time
+          const uniqueData = mergedData.reduce((acc, candle) => {
+            if (!acc.find(c => c.time === candle.time)) {
+              acc.push(candle);
+            }
+            return acc;
+          }, [] as Candle[]);
+          
+          uniqueData.sort((a, b) => Number(a.time) - Number(b.time));
+          seriesRef.current?.setData(uniqueData);
+          
+          loadedRangeRef.current = {
+            from: Number(uniqueData[0].time),
+            to: Number(uniqueData[uniqueData.length - 1].time)
+          };
+        }
+      }
+    };
+
+    // Debounce
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const debouncedHandler = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleVisibleRangeChange, 500);
+    };
+
+    timeScale.subscribeVisibleLogicalRangeChange(debouncedHandler);
+
+    return () => {
+      clearTimeout(timeoutId);
+      timeScale.unsubscribeVisibleLogicalRangeChange(debouncedHandler);
+    };
+  }, [chartReady, selectedInterval, selectedPeriod, fetchCandles]);
+
+  // WebSocket for real-time updates
+  useEffect(() => {
+    if (!chartReady || !selectedSymbol || !selectedInterval) return;
 
     const ws = new WebSocket(import.meta.env.VITE_WS_BACKPACK_API);
 
@@ -95,21 +241,16 @@ export default function Chart({ duration, startTime }: Props) {
       ws.send(
         JSON.stringify({
           method: "SUBSCRIBE",
-          params: [`klines.1m.SOL_USDC`], // ${duration} ${selectedSymbol}
+          params: [`klines.${selectedInterval}.${selectedSymbol}_USDC`],
         })
       );
     };
 
     ws.onmessage = (event) => {
-      console.log("ayo ayo")
       const data = JSON.parse(event.data);
-      console.log("checking data from ws in candles", data)
-
-      // if (data.topic?.startsWith("klines")) {
+      if (data.data) {
         const kline = data.data;
-        console.log("checking kline", kline)
-          // console.log("kline data",kline)  
-        const newCandle:CandlestickData = {
+        const newCandle: CandlestickData = {
           time: Math.floor(new Date(kline.t).getTime() / 1000) as Time,
           open: parseFloat(kline.o),
           high: parseFloat(kline.h),
@@ -118,7 +259,14 @@ export default function Chart({ duration, startTime }: Props) {
         };
 
         seriesRef.current?.update(newCandle);
-      // }
+        
+        if (loadedRangeRef.current) {
+          loadedRangeRef.current.to = Math.max(
+            loadedRangeRef.current.to,
+            Number(newCandle.time)
+          );
+        }
+      }
     };
 
     ws.onerror = (error) => {
@@ -130,80 +278,45 @@ export default function Chart({ duration, startTime }: Props) {
         ws.send(
           JSON.stringify({
             method: "UNSUBSCRIBE",
-            params: [`klines.${duration}.${selectedSymbol}`],
+            params: [`klines.${selectedInterval}.${selectedSymbol}_USDC`],
           })
         );
       }
       ws.close();
     };
-  }, [duration, selectedSymbol, chartReady]);
+  }, [selectedInterval, selectedSymbol, chartReady]);
 
+  // Load initial data - auto-calculate or use selected period
   useEffect(() => {
-    if (!chartReady) return;
+    if (!chartReady || !selectedInterval) return;
 
-    async function fetchData() {  
-      setIsLoading(true);
-      try {
-        const res = await fetch(
-          // `${import.meta.env.VITE_BACKEND_BASE_URL}/candles/market?symbol=${selectedSymbol}&interval=${duration}&startTime=${startTime}`,
-          `${import.meta.env.VITE_BACKEND_BASE_URL}/api/candles?symbol=SOL_USDC&interval=1m&startTime=1768897800`,
+    async function loadData() {
+      let startTime: number;
+      
+      if (selectedPeriod !== null) {
+        // User selected a specific period
+        startTime = Number(selectedPeriod);
+      } else {
+        // Auto mode: calculate based on chart width and interval
+        const numCandles = getCandlesForView(selectedInterval, chartWidth);
+        startTime = calculateStartTime(selectedInterval, numCandles);
+      }
 
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          toast.error(errorData.message || "Failed to fetch data");
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-
-        const json = await res.json();
-
-        // Ensure json is an array
-        const dataArray = Array.isArray(json) ? json : json.data || [];
-
-        if (dataArray.length === 0) {
-          toast.warning("No candle data received");
-          return;
-        }
-
-        if (dataArray.length > 1400) {
-          toast.warning(
-            "Data range too large. Please select a smaller time range."
-          );
-          return;
-        }
-
-        const candles: Candle[] = dataArray.map((d: RawCandle) => ({
-          time: Math.floor(new Date(d.start).getTime() / 1000),
-          open: parseFloat(d.open),
-          high: parseFloat(d.high),
-          low: parseFloat(d.low),
-          close: parseFloat(d.close),
-        }));
-
-        candles.sort((a, b) => Number(a.time) - Number(b.time));
+      const candles = await fetchCandles(startTime);
+      
+      if (candles && candles.length > 0) {
         seriesRef.current?.setData(candles);
-      } catch (err) {
-        console.error("Failed to load chart data:", err);
-        const message =
-          err instanceof Error
-            ? err.message
-            : typeof err === "string"
-            ? err
-            : JSON.stringify(err) || "Failed to load chart data";
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
+        loadedRangeRef.current = {
+          from: Number(candles[0].time),
+          to: Number(candles[candles.length - 1].time)
+        };
+        
+        chartRef.current?.timeScale().fitContent();
       }
     }
 
-    fetchData();
-  }, [duration, chartReady, selectedSymbol, startTime]);
+    loadData();
+  }, [selectedInterval, chartReady, selectedSymbol, selectedPeriod, chartWidth, fetchCandles]);
 
   return (
     <div className="w-full h-[300px] sm:h-[500px] relative flex align-center max-h-[500px]">

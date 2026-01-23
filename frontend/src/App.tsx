@@ -1,4 +1,5 @@
 import Chart from "./components/CandlestickChart"
+import { HourMinuteDay } from "./components/HourMinuteDay"
 import OrderPanel from "./components/OrderPanel"
 import { OrderTable } from "./components/OrderTable"
 
@@ -22,8 +23,11 @@ function App() {
         <div className="flex flex-col flex-3 gap-2">
           
           {/* chart  */}
+          {/* <div> */}
+            <HourMinuteDay />
+          {/* </div> */}
           <div className="h-125">
-            <Chart duration="30m" startTime={1768651501} />
+            <Chart  />
           </div>
 
           <OrderTable />
