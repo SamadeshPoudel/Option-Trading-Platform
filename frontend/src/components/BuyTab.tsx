@@ -14,7 +14,7 @@ const BuyTab = () => {
 
 
   const [quantity, setQuantity] = useState(1);
-  const [amount, setAmount] = useState(livePrice?.bid || 1);
+  const [amount, setAmount] = useState(livePrice?.bid || 100);
   const [leverage, setLeverage] = useState(1);
 
   // Calculate quantity whenever margin, leverage, or price changes
