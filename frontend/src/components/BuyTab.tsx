@@ -1,7 +1,7 @@
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import InputCard from "./InputCard"
-import { useAssetStore } from "store/useStore"
+import { useAssetStore, useTradeStore } from "store/useStore"
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Card } from "./ui/card"
@@ -10,6 +10,7 @@ import { Card } from "./ui/card"
 const BuyTab = () => {
   const selectedSymbol = useAssetStore(state => state.selectedSymbol);
   const livePrice = useAssetStore(state => state.livePrices[selectedSymbol]);
+  const fetchOrders = useTradeStore(state => state.fetchOrders)
 
 
   const [quantity, setQuantity] = useState(1);
@@ -41,6 +42,7 @@ const BuyTab = () => {
       })
     })
     const data = await res.json();
+    fetchOrders()
     console.log("data from /trade/create", data);
   }
 

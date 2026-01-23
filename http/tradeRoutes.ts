@@ -192,7 +192,7 @@ router.get("/balance", async(req:express.Request, res:express.Response)=>{
 
 router.get("/open-orders", async(req:express.Request, res:express.Response)=>{
     try {
-        const validatedData = userIdSchema.parse(req.body);
+        const validatedData = userIdSchema.parse(req.query);
         const {userId} = validatedData;
         if(!userId){
             return res.status(404).json({msg:"Missing userId!"})
@@ -240,7 +240,7 @@ router.get("/open-orders", async(req:express.Request, res:express.Response)=>{
 
 router.get("/closed-orders", async(req:express.Request, res:express.Response)=>{
     try {
-        const validatedData = userIdSchema.parse(req.body);
+        const validatedData = userIdSchema.parse(req.query);
         const {userId} = validatedData;
         if(!userId){
             return res.status(404).json({msg:"Missing userId!"})

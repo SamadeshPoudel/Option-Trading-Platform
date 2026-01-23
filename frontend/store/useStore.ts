@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/api-client';
 import { create } from 'zustand'
 
 export type Asset = "ETH" | "SOL" | "BTC"
@@ -14,26 +15,20 @@ type AssetState = {
   updatePrice: (symbol: string, price: Price) => void;
 };
 
-
+  
 type Order = {
   margin: number,
   leverage:number,
+  quantity?:number,
   asset: string,
   type: "buy" | "sell"
   orderId: string
-  openingPrice:string;
+  openPrice:string;
   slippage: number,
+  status?:string
 }
 
-type OrderState = {
-  openTrades: Order[],
-  closedTrades: any[],
-  setOpenTrades: (trade:Order)=>void;
-  fetchOrders:()=>void;
-  removeTrade: (id:string)=> void; 
-  clearTrade: ()=> void;
-  loading: boolean;
-}
+
 
 export const useAssetStore = create<AssetState>((set) => ({
   selectedSymbol: "SOL",
@@ -50,6 +45,16 @@ export const useAssetStore = create<AssetState>((set) => ({
 
 }));
 
+type OrderState = {
+  openTrades: Order[],
+  closedTrades: any[],
+  setOpenTrades: (trade:Order)=>void;
+  fetchOrders:()=>void;
+  removeTrade: (id:string)=> void; 
+  clearTrade: ()=> void;
+  loading: boolean;
+}
+
 export const useTradeStore = create<OrderState>((set)=>({
   openTrades:[],
   closedTrades:[],
@@ -58,24 +63,31 @@ export const useTradeStore = create<OrderState>((set)=>({
     set((state)=>({
       openTrades: [...state.openTrades,trade]
     })),
+
   fetchOrders: async () =>{
-      set({
-        loading:true
+    set({
+      loading:true
+    })
+    try {
+     const res = await apiRequest(`/api/open-orders?userId=03d60c5f-99ef-4812-bfc1-49e52d44b3c5`,"GET");
+     const closeTradeRes = await apiRequest(`/api/closed-orders?userId=03d60c5f-99ef-4812-bfc1-49e52d44b3c5`,"GET"); 
+     
+     const openOrders = res.data;
+     const closedOrders = closeTradeRes.closedOrder;
+     
+      set({openTrades: openOrders, closedTrades: closedOrders, loading:false})
+    }catch(err){
+        console.error('Failed to fetch orders',err)
+        set({loading:false})
+    }
+  },
+    removeTrade: (id) =>
+    set((state)=>({
+      openTrades: state.openTrades.filter((trade)=>{
+      return  trade.orderId !== id;
       })
-      try {
-       const res = await apiRequest<OpenOrderResponse>('api/open-orders',"GET");
-       const closeTradeRes = await apiRequest<ClosedTradesResponse>('/trade/closed-orders',"GET");
-       const closedTrades = await closeTradeRes.closedOrders;
-       const data = await res.message as Order[];
-      //  console.log("yaha dai",data)
-        set({openTrades:data,loading:false})
-        set({closedTrades:closedTrades,loading:false})
-      }catch(err){
-          console.error('Failed to fetch orders',err)
-          set({loading:false})
-      }
-    },
-
-  
-
+    })),
+    clearTrade:()=>set({
+    openTrades: []
+  })
 }))

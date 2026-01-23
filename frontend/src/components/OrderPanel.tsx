@@ -14,13 +14,8 @@ import { useAssetStore } from "store/useStore"
 
 
 const OrderPanel = () => {
-
-
-
   return (
     <Card className="bg-[#14151B]">
-
-
 
     {/*PriceBoard to show real-time price of an asset  */}
     <PriceBoard  />
