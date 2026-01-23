@@ -25,8 +25,11 @@ import { useEffect } from "react"
 
 export function OrderTable() {
   const openTrades = useTradeStore(state=>state.openTrades)
+  const closedTrades = useTradeStore(state => state.closedTrades);
   const fetchOrders = useTradeStore(state=>state.fetchOrders);
   console.log("open Trades", openTrades)
+  console.log("closed Trades", closedTrades);
+
   useEffect(() => {
    fetchOrders()
   }, [])
@@ -56,7 +59,7 @@ export function OrderTable() {
       <TabsContent value="open-order">
         <Card className="w-full bg-green-200">
           <Table>
-  <TableCaption>A list of your recent invoices.</TableCaption>
+  <TableCaption>A list of your open orders</TableCaption>
   <TableHeader>
     <TableRow>
       <TableHead className="w-[100px]">Symbol</TableHead>
@@ -103,52 +106,42 @@ export function OrderTable() {
       <TabsContent value="closed-order">
         <Card>
           <Table>
-  <TableCaption>A list of your recent invoices.</TableCaption>
+  <TableCaption>A list of your recent closed orders</TableCaption>
   <TableHeader>
     <TableRow>
-      <TableHead className="w-[100px]">Invoice</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>Method</TableHead>
-      <TableHead className="text-right">Amount</TableHead>
+      <TableHead className="w-[100px]">Symbol</TableHead>
+      <TableHead>Side</TableHead>
+      <TableHead>Qty</TableHead>
+      <TableHead>Leverage</TableHead>
+      <TableHead>Opening Price</TableHead>
+      <TableHead>Amount</TableHead>
+      <TableHead>Pnl (ROI%)</TableHead>
+      <TableHead className="text-right">closed-at</TableHead>
     </TableRow>
   </TableHeader>
   <TableBody>
-    <TableRow>
-      <TableCell className="font-medium">INV001</TableCell>
-      <TableCell>Paid</TableCell>
-      <TableCell>Credit Card</TableCell>
-      <TableCell className="text-right">$250.00</TableCell>
-    </TableRow>
-  </TableBody>
+    {closedTrades.length > 0 ? (
+      closedTrades.map((trade) => (
+        <TableRow key={trade.orderId}>
+          <TableCell className="font-medium">{trade.asset}</TableCell>
+          <TableCell>{trade.type}</TableCell>
+          <TableCell>{trade.quantity?.toFixed(4) || "-"}</TableCell>
+          <TableCell>{trade.leverage}x</TableCell>
+          <TableCell>${((Number(trade.openPrice))/10000).toFixed(2)}</TableCell>
+          <TableCell>${(trade.margin / 10000).toFixed(2)}</TableCell>
+          <TableCell>pnl</TableCell>
+          <TableCell className="text-right">{Date.now()}</TableCell>
+        </TableRow>
+      ))
+    ) : (
+      <TableRow>
+        <TableCell colSpan={8} className="text-center text-gray-500">
+          No closed orders
+        </TableCell>
+      </TableRow>
+    )}
+</TableBody>
 </Table>
-        </Card>
-      </TabsContent>
-      <TabsContent value="reports">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reports</CardTitle>
-            <CardDescription>
-              Generate and download your detailed reports. Export data in
-              multiple formats for analysis.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            You have 5 reports ready and available to export.
-          </CardContent>
-        </Card>
-      </TabsContent>
-      <TabsContent value="settings">
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>
-              Manage your account preferences and options. Customize your
-              experience to fit your needs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Configure notifications, security, and themes.
-          </CardContent>
         </Card>
       </TabsContent>
     </Tabs>
