@@ -1,44 +1,53 @@
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
-import InputCard from "./InputCard"
 import { useAssetStore, useTradeStore } from "store/useStore"
 import { useEffect, useState } from "react"
-import { Input } from "@/components/ui/input"
 import { Card } from "./ui/card"
+import { Info } from "lucide-react"
+import usdLogo from "../assets/UsdLogo.svg"
+import solanaLogo from "../assets/SolanaLogo.svg"
+import ethereumLogo from "../assets/EthereumLogo.svg"
+import bitcoinLogo from "../assets/bitcoinLogo.svg"
+import type { Asset } from "store/useStore"
 
+// Asset logos config
+const assetLogos: Record<Asset, string> = {
+  SOL: solanaLogo,
+  BTC: bitcoinLogo,
+  ETH: ethereumLogo,
+}
 
 const BuyTab = () => {
   const selectedSymbol = useAssetStore(state => state.selectedSymbol);
   const livePrice = useAssetStore(state => state.livePrices[selectedSymbol]);
   const fetchOrders = useTradeStore(state => state.fetchOrders)
 
-
   const [quantity, setQuantity] = useState(1);
   const [amount, setAmount] = useState(livePrice?.bid || 100);
   const [leverage, setLeverage] = useState(1);
+  const [isAmountFocused, setIsAmountFocused] = useState(false);
 
   // Calculate quantity whenever margin, leverage, or price changes
   useEffect(() => {
     if (livePrice?.bid) {
-      const totalPosition = amount * leverage; // Total position size
+      const totalPosition = amount * leverage;
       const calculatedQuantity = totalPosition / livePrice.bid;
       setQuantity(calculatedQuantity);
     }
   }, [amount, leverage, livePrice?.bid]);
 
-  const handleClick = async()=>{
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/create`,{
-      "method":"POST",
-      "headers":{
-        "content-type":"application/json"
+  const handleClick = async () => {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/create`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
       },
-      // userId, asset, type, margin, leverage
-      "body":JSON.stringify({
-          userId:"03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
-          asset:selectedSymbol,
-          type:"buy",
-          margin:amount,
-          leverage:leverage
+      body: JSON.stringify({
+        userId: "03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
+        asset: selectedSymbol,
+        type: "buy",
+        margin: amount,
+        leverage: leverage
       })
     })
     const data = await res.json();
@@ -47,27 +56,47 @@ const BuyTab = () => {
   }
 
   return (
-    <div className="text-white flex flex-col gap-2">
+    <div className="text-white flex flex-col gap-3 mx-2">
 
-      {/* <InputCard label={"Buy price"} input={livePrice?.bid} symbol={"$"}  /> */}
-      <p>Buy price</p>
-      <Input value={livePrice?.bid?.toFixed(2) || "Loading..."} className="focus:outline-none focus:ring-0" readOnly />
+      {/* Buy Price - Read Only */}     
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-gray-400">Buy price</p>
+        <Card className="h-10 bg-[#202127] border-[#2a2a30] px-3 py-2 rounded-sm">
+          <div className="flex justify-between items-center w-full">
+            <span className="text-base font-semibold text-white">
+              {livePrice?.bid?.toFixed(2) || "Loading..."}
+            </span>
+            <div className="w-5 h-5 flex items-center justify-center">
+              <img src={usdLogo} alt="usd-logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
+        </Card>
+      </div>
 
-      {/* <InputCard label={"Quantity"} input={quantity} symbol={"B"} />
-         */}
       {/* Quantity - Auto Calculated (Read Only) */}
-      <p>Quantity</p>
-      <Input
-        value={quantity.toFixed(2)}
-        readOnly
-        className="bg-gray-800"
-      />
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-gray-400">Quantity</p>
+        <Card className="h-10 bg-[#202127] border-[#2a2a30] px-3 py-2 rounded-sm">
+          <div className="flex justify-between items-center h-full w-full">
+            <span className="text-base font-semibold text-white">
+              {quantity.toFixed(4)}
+            </span>
+            <div className="w-5 h-5 flex items-center justify-center">
+              <img 
+                src={assetLogos[selectedSymbol]} 
+                alt={`${selectedSymbol}-logo`} 
+                className="w-full h-full object-contain" 
+              />
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Leverage Slider */}
-      <div className="flex flex-col gap-2 m-2">
+      <div className="flex flex-col gap-2 py-1">
         <div className="flex justify-between">
-          <p>Leverage</p>
-          <p className="font-bold">{leverage}x</p>
+          <p className="text-xs text-gray-400">Leverage</p>
+          <p className="font-bold text-sm text-green-400">{leverage}x</p>
         </div>
         <Slider
           value={[leverage]}
@@ -75,24 +104,56 @@ const BuyTab = () => {
           min={1}
           step={1}
           onValueChange={(v) => setLeverage(v[0])}
+          className="cursor-pointer"
         />
       </div>
 
-      {/* <InputCard label={"Amount"} input={amount} symbol={"$"}  /> */}
-      {/* Margin - User Input */}
-      <p>Amount</p>
-      <Input
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value === '' ? 0 : Number(e.target.value))}
-        min={0}
-        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-      />
+      {/* Amount - User Input */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-gray-400">Amount</p>
+        <Card 
+          className={`
+            h-10 bg-[#202127] border-[#2a2a30] px-3 py-2 rounded-sm transition-all duration-200
+            ${isAmountFocused ? 'ring-1 ring-emerald-500/50 border-emerald-500/50' : ''}
+          `}
+        >
+          <div className="flex justify-between items-center h-full w-full">
+            <input
+              type="number"
+              value={amount === 0 && isAmountFocused ? '' : amount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setAmount(0);
+                } else {
+                  setAmount(Number(val));
+                }
+              }}
+              onFocus={() => setIsAmountFocused(true)}
+              onBlur={() => setIsAmountFocused(false)}
+              min={0}
+              placeholder="0"
+              className="
+                bg-transparent text-base font-semibold text-white w-full
+                outline-none border-none focus:outline-none focus:ring-0
+                [appearance:textfield] 
+                [&::-webkit-outer-spin-button]:appearance-none 
+                [&::-webkit-inner-spin-button]:appearance-none
+                placeholder:text-gray-500
+              "
+            />
+            <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <img src={usdLogo} alt="usd-logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
+        </Card>
+      </div>
 
-      <div className="m-2">
+      {/* Buy Button */}
+      <div className="pt-1">
         <Button
           variant="outline"
-          className="text-black bg-green-600 w-full hover:bg-green-400 hover:text-white border-none cursor-pointer"
+          className="text-black bg-green-600 w-full hover:bg-green-500 hover:text-white border-none cursor-pointer h-9 text-sm font-sm transition-all duration-200"
           disabled={!livePrice?.bid}
           onClick={handleClick}
         >
@@ -100,33 +161,44 @@ const BuyTab = () => {
         </Button>
       </div>
 
-      {/* <p>total amount: {amount*leverage}</p> */}
-      <Card className="p-2 flex gap-1 bg-[#202127] text-white">
-        <p>Overview</p>
-        <div className="flex justify-between">
-          <p>Asset</p>
-          <p>{selectedSymbol}</p>
+      {/* Overview Card */}
+      <Card className="p-2 flex flex-col gap-2 bg-[#202127] border-[#2a2a30] text-white mt-1">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs text-gray-400 font-medium">Overview</p>
+          <div className="w-4 h-4 flex items-center justify-center">
+            <Info className="w-3 h-3 text-gray-500" />
+          </div>
         </div>
-        <div className="flex justify-between">
-          <p>Margin / Amount</p>
-          <p>{amount.toFixed(2)}</p>
+        <div className="flex justify-between text-xs">
+          <p className="text-gray-400">Asset</p>
+          <div className="flex items-center gap-1.5">
+            <img 
+              src={assetLogos[selectedSymbol]} 
+              alt={`${selectedSymbol}-logo`} 
+              className="w-3.5 h-3.5 object-contain" 
+            />
+            <p className="font-medium">{selectedSymbol}</p>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <p>Leverage</p>
-          <p>1:{leverage}</p>
+        <div className="flex justify-between text-xs">
+          <p className="text-gray-400">Margin / Amount</p>
+          <p className="font-medium">${amount.toFixed(2)}</p>
         </div>
-        <div className="flex justify-between">
-          <p>Quantity</p>
-          <p>{quantity.toFixed(2)}</p>
+        <div className="flex justify-between text-xs">
+          <p className="text-gray-400">Leverage</p>
+          <p className="font-medium text-emerald-400">{leverage}x</p>
         </div>
-        <div className="flex justify-between">
-          <p>Platform fee</p>
-          <p>{(amount * 0.01).toFixed(2)}</p>
+        <div className="flex justify-between text-xs">
+          <p className="text-gray-400">Quantity</p>
+          <p className="font-medium">{quantity.toFixed(4)}</p>
+        </div>
+        <div className="flex justify-between text-xs border-t border-[#2a2a30] pt-1.5 mt-0.5">
+          <p className="text-gray-400">Platform fee</p>
+          <p className="font-medium">${(amount * 0.01).toFixed(2)}</p>
         </div>
       </Card>
 
     </div>
-
   )
 }
 

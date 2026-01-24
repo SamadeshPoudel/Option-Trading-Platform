@@ -26,11 +26,27 @@ const PriceBoardDropdown = () => {
   const updatePrice = useAssetStore(state => state.updatePrice)
   const price = useAssetStore((state) => selectedSymbol ? state.livePrices[selectedSymbol] : null)
   const [isOpen, setIsOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [triggerWidth, setTriggerWidth] = useState<number>(0)
 
   // tracking previous bid to detect direction and show color of the price red green or whatever I want
   const prevBidRef = useRef<number | null>(null)
   const timeoutRef = useRef<number | null>(null)
   const [direction, setDirection] = useState<"up" | "down" | "neutral">("neutral")
+
+  // Get trigger width for dropdown
+  useEffect(() => {
+    const updateWidth = () => {
+      if (triggerRef.current) {
+        setTriggerWidth(triggerRef.current.offsetWidth)
+      }
+    }
+    
+    updateWidth()
+    window.addEventListener("resize", updateWidth)
+    
+    return () => window.removeEventListener("resize", updateWidth)
+  }, [])
 
   useEffect(() => {
     if (price?.bid != null) {
@@ -111,12 +127,15 @@ const PriceBoardDropdown = () => {
   const currentAsset = assetConfig[selectedSymbol]
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger className="bg-[#1a1a1f] hover:bg-[#252529] p-3 m-2 rounded-lg cursor-pointer transition-all duration-200 outline-none">
-        <div className="flex items-center justify-between gap-6 min-w-[180px]">
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}> 
+      <DropdownMenuTrigger 
+        ref={triggerRef}
+        className="w-full bg-[#1a1a1f] hover:bg-[#252529] p-3 my-1 rounded-lg cursor-pointer transition-all duration-200 outline-none"
+      >
+        <div className="flex items-center justify-between w-full">
           {/* Left: Logo + Symbol */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8  flex items-center justify-center p-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
               <img 
                 src={currentAsset.logo} 
                 alt={`${selectedSymbol}-logo`} 
@@ -124,25 +143,28 @@ const PriceBoardDropdown = () => {
               />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-white font-semibold text-sm">{selectedSymbol}</span>
-              <span className="text-gray-500 text-xs">{currentAsset.name}</span>
+              <span className="text-white font-semibold text-x">{selectedSymbol}</span>
             </div>
           </div>
 
           {/* Right: Price + Arrow */}
-          <div className="flex items-center gap-2">
-            <span className={`font-bold text-lg transition-colors duration-300 ${priceClass}`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`font-bold text-x transition-colors duration-300 ${priceClass}`}>
               {price ? `$${price.bid.toFixed(2)}` : "-"}
             </span>
             <ChevronDown 
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+              className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} 
             />
           </div>
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="bg-[#1a1a1f] border border-[#2a2a30] rounded-lg p-1 min-w-[200px]">
-        <DropdownMenuLabel className="text-gray-400 text-xs uppercase tracking-wider px-2 py-1.5">
+      <DropdownMenuContent 
+        className="bg-[#1a1a1f] border border-[#2a2a30] rounded-lg p-1"
+        style={{ width: triggerWidth > 0 ? `${triggerWidth}px` : 'auto' }}
+        align="start"
+      >
+        <DropdownMenuLabel className="text-gray-400 text-[10px] uppercase tracking-wider px-2 py-1">
           Select Asset
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#2a2a30]" />
@@ -156,28 +178,28 @@ const PriceBoardDropdown = () => {
               key={asset}
               onClick={() => handleClick(asset)}
               className={`
-                flex items-center gap-3 px-2 py-2.5 rounded-md cursor-pointer transition-colors duration-150
+                flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors duration-150
                 ${isSelected 
                   ? 'bg-emerald-500/10 text-emerald-400' 
                   : 'text-white hover:bg-[#252529]'
                 }
               `}
             >
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center p-1.5 ${isSelected ? 'bg-emerald-500/20' : 'bg-[#2a2a30]'}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center p-1 flex-shrink-0 ${isSelected ? 'bg-emerald-500/20' : 'bg-[#2a2a30]'}`}>
                 <img 
                   src={config.logo} 
                   alt={`${asset}-logo`} 
                   className="w-full h-full object-contain" 
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="font-medium text-sm">{asset}</span>
-                <span className={`text-xs ${isSelected ? 'text-emerald-400/70' : 'text-gray-500'}`}>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="font-medium text-xs">{asset}</span>
+                <span className={`text-[10px] ${isSelected ? 'text-emerald-400/70' : 'text-gray-500'}`}>
                   {config.name}
                 </span>
               </div>
               {isSelected && (
-                <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
               )}
             </DropdownMenuItem>
           )

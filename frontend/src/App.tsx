@@ -8,7 +8,7 @@ function App() {
   return(
     <div className=" h-screen bg-[#0E0F14]">
       {/* navbar  */}
-      <nav className="flex justify-between bg-amber-300 p-2 py-4">
+      <nav className="flex justify-between bg-black p-2 py-4">
         <div>
           LOGO
         </div>
@@ -34,7 +34,7 @@ function App() {
         </div>
 
         {/* right  */}
-        <div className="flex-1">
+        <div className="flex-1 h-[calc(100vh-80px)]">
           <OrderPanel />
         </div>
       </div>

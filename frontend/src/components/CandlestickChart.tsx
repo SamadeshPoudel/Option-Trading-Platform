@@ -129,10 +129,10 @@ export default function Chart() {
     const height = window.innerHeight < 500 ? 300 : 500;
     
     const chart = createChart(ref.current, {
-      layout: { background: { color: "#171717" }, textColor: "#94a3b8" },
+      layout: { background: { color: "#14151B" }, textColor: "#94a3b8" },
       grid: {
-        vertLines: { color: "#2E2E2E" },
-        horzLines: { color: "#2E2E2E" },
+        vertLines: { color: "#202127" },
+        horzLines: { color: "#202127" },
       },
       rightPriceScale: { borderColor: "#0b1220" },
       timeScale: { borderColor: "#0b1220" },
