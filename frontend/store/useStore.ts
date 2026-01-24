@@ -99,7 +99,7 @@ export const useTradeStore = create<OrderState>((set)=>({
 }))
 
 export const useChartStore = create<ChartState>((set)=>({
-  selectedInterval:"1m", //1m
+  selectedInterval:"30m", //1m
   selectedPeriod:null, //1768897800
   setSelectedInterval:(interval)=>{
     set({selectedInterval:interval, selectedPeriod:null})

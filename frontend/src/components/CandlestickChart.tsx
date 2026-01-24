@@ -28,9 +28,7 @@ type RawCandle = {
 
 // Get number of candles to fill the chart view based on interval
 const getCandlesForView = (interval: string, chartWidth: number): number => {
-  // Approximate candle width is ~10px, so calculate how many fit
   const candlesVisible = Math.floor(chartWidth / 10);
-  // Add some buffer for scrolling
   return Math.max(candlesVisible * 2, 100);
 };
 
@@ -124,10 +122,9 @@ export default function Chart() {
     if (!ref.current) return;
 
     const width = ref.current.clientWidth;
+    const height = ref.current.clientHeight;
     setChartWidth(width);
-    
-    const height = window.innerHeight < 500 ? 300 : 500;
-    
+
     const chart = createChart(ref.current, {
       layout: { background: { color: "#14151B" }, textColor: "#94a3b8" },
       grid: {
@@ -135,21 +132,25 @@ export default function Chart() {
         horzLines: { color: "#202127" },
       },
       rightPriceScale: { borderColor: "#0b1220" },
-      timeScale: { borderColor: "#0b1220" },
+      timeScale: { 
+        borderColor: "#0b1220",
+        timeVisible: true,
+        secondsVisible: false,
+      },
       crosshair: { mode: 1 },
       width: width,
-      height: height,
+      height: height || 300,
     });
 
     chartRef.current = chart;
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#039e64",
-      downColor: "#CE484B",
-      borderUpColor: "#039e64",
-      borderDownColor: "#CE484B",
-      wickUpColor: "#039e64",
-      wickDownColor: "#CE484B",
+      upColor: "#16A34A",
+      downColor: "#DC2626",
+      borderUpColor: "#16A34A",
+      borderDownColor: "#DC2626",
+      wickUpColor: "#16A34A",
+      wickDownColor: "#DC2626",
     });
 
     seriesRef.current = series;
@@ -158,10 +159,11 @@ export default function Chart() {
     const onResize = () => {
       if (ref.current) {
         const newWidth = ref.current.clientWidth;
+        const newHeight = ref.current.clientHeight;
         setChartWidth(newWidth);
         chart.applyOptions({
           width: newWidth,
-          height: ref.current.clientHeight,
+          height: newHeight || 300,
         });
       }
     };
@@ -186,7 +188,6 @@ export default function Chart() {
       const visibleRange = timeScale.getVisibleLogicalRange();
       if (!visibleRange || !loadedRangeRef.current) return;
 
-      // Check if user scrolled near the left edge
       if (visibleRange.from < 10) {
         const intervalSeconds = getIntervalSeconds(selectedInterval);
         const newStartTime = loadedRangeRef.current.from - (100 * intervalSeconds);
@@ -197,7 +198,6 @@ export default function Chart() {
           const existingData = (seriesRef.current?.data() || []) as Candle[];
           const mergedData = [...olderCandles, ...existingData];
           
-          // Remove duplicates by time
           const uniqueData = mergedData.reduce((acc, candle) => {
             if (!acc.find(c => c.time === candle.time)) {
               acc.push(candle);
@@ -216,7 +216,6 @@ export default function Chart() {
       }
     };
 
-    // Debounce
     let timeoutId: ReturnType<typeof setTimeout>;
     const debouncedHandler = () => {
       clearTimeout(timeoutId);
@@ -286,7 +285,7 @@ export default function Chart() {
     };
   }, [selectedInterval, selectedSymbol, chartReady]);
 
-  // Load initial data - auto-calculate or use selected period
+  // Load initial data
   useEffect(() => {
     if (!chartReady || !selectedInterval) return;
 
@@ -294,10 +293,8 @@ export default function Chart() {
       let startTime: number;
       
       if (selectedPeriod !== null) {
-        // User selected a specific period
         startTime = Number(selectedPeriod);
       } else {
-        // Auto mode: calculate based on chart width and interval
         const numCandles = getCandlesForView(selectedInterval, chartWidth);
         startTime = calculateStartTime(selectedInterval, numCandles);
       }
@@ -319,7 +316,7 @@ export default function Chart() {
   }, [selectedInterval, chartReady, selectedSymbol, selectedPeriod, chartWidth, fetchCandles]);
 
   return (
-    <div className="w-full h-[300px] sm:h-[500px] relative flex align-center max-h-[500px]">
+    <div className="w-full h-full relative">
       <div className="w-full h-full" ref={ref} />
       {isLoading && (
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-10">

@@ -6,9 +6,9 @@ import { OrderTable } from "./components/OrderTable"
 function App() {
 
   return(
-    <div className=" h-screen bg-[#0E0F14]">
-      {/* navbar  */}
-      <nav className="flex justify-between bg-black p-2 py-4">
+    <div className="h-screen bg-[#0E0F14] flex flex-col overflow-hidden">
+      {/* navbar */}
+      <nav className="flex justify-between bg-black p-2 py-3 flex-shrink-0">
         <div>
           LOGO
         </div>
@@ -17,24 +17,29 @@ function App() {
         </div>
       </nav>
 
-      {/* body  */}
-      <div className="flex p-2 gap-2">
-        {/* left  */}
-        <div className="flex flex-col flex-3 gap-2">
+      {/* body */}
+      <div className="flex p-2 gap-2 flex-1 overflow-hidden min-h-0">
+        {/* left */}
+        <div className="flex flex-col flex-[3] gap-0 overflow-hidden min-h-0">
           
-          {/* chart  */}
-          {/* <div> */}
+          {/* chart controls*/}
+          <div className="flex-shrink-0 pb-1">
             <HourMinuteDay />
-          {/* </div> */}
-          <div className="h-125">
-            <Chart  />
+          </div>
+          
+          {/* chart - takes more space, no gap from above */}
+          <div className="flex-[3] min-h-0 overflow-hidden">
+            <Chart />
           </div>
 
-          <OrderTable />
+          {/* order table - flex 1 part with small top gap */}
+          <div className="flex-[1.5] min-h-0 overflow-hidden mt-1">
+            <OrderTable />
+          </div>
         </div>
 
-        {/* right  */}
-        <div className="flex-1 h-[calc(100vh-80px)]">
+        {/* right */}
+        <div className="flex-1 overflow-hidden min-h-0">
           <OrderPanel />
         </div>
       </div>
