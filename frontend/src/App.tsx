@@ -1,5 +1,5 @@
 import Chart from "./components/CandlestickChart"
-import { HourMinuteDay } from "./components/HourMinuteDay"
+import { ChartNavbar } from "./components/ChartNavbar"
 import OrderPanel from "./components/OrderPanel"
 import { OrderTable } from "./components/OrderTable"
 
@@ -24,7 +24,7 @@ function App() {
           
           {/* chart controls*/}
           <div className="flex-shrink-0 pb-1">
-            <HourMinuteDay />
+            <ChartNavbar />
           </div>
           
           {/* chart - takes more space, no gap from above */}
