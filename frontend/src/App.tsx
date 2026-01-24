@@ -1,5 +1,6 @@
 import Chart from "./components/CandlestickChart"
 import { ChartNavbar } from "./components/ChartNavbar"
+import Navbar from "./components/Navbar"
 import OrderPanel from "./components/OrderPanel"
 import { OrderTable } from "./components/OrderTable"
 
@@ -8,14 +9,7 @@ function App() {
   return(
     <div className="h-screen bg-[#0E0F14] flex flex-col overflow-hidden">
       {/* navbar */}
-      <nav className="flex justify-between bg-black p-2 py-3 flex-shrink-0">
-        <div>
-          LOGO
-        </div>
-        <div>
-          pnl and other stuffs
-        </div>
-      </nav>
+      <Navbar />
 
       {/* body */}
       <div className="flex p-2 gap-2 flex-1 overflow-hidden min-h-0">

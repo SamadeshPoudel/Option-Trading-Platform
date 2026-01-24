@@ -106,7 +106,10 @@ export function ChartNavbar() {
   };
 
   // Button styles
-  const activeStyle = "bg-white text-black hover:bg-gray-200 hover:text-black";
+  // const activeStyle = "bg-white text-black hover:bg-gray-200 hover:text-black";
+  // const inactiveStyle = "bg-[#1a1a1f] text-gray-400 hover:bg-[#252529] hover:text-white border-[#2a2a30]";
+
+    const activeStyle = "bg-[#2a2a30] text-white hover:bg-[#353540] border-[#3a3a45]";
   const inactiveStyle = "bg-[#1a1a1f] text-gray-400 hover:bg-[#252529] hover:text-white border-[#2a2a30]";
 
   return (
