@@ -198,6 +198,10 @@ async function listenToOrders() {
                     else if(data.action ==="CHECK_BALANCE"){
                         const userId = data.userId;
                         const balance = userBalance.get(userId);
+                        //it is setting the userBalance to 500 when the fe fetches the balance; whenever new usr come to the platform
+                        if(!userBalance.has(userId)){
+                            userBalance.set(userId, 5000000);
+                        }
 
                         const checkedBalance = {
                             action:data.action,
