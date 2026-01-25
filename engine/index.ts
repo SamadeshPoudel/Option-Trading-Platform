@@ -18,12 +18,31 @@ const liquidateTrade = (priceUpdate:any)=>{
     for(const [userId, orders] of openOrders){
         for(const order of orders){
             if(order.leverage > 1 && order.type ==="buy"){
-                if(priceUpdate.askWithSpread < order.openPrice){
-                    const changePercentage = ((order.openPrice - priceUpdate.askWithSpread )/order.openPrice)*100;
-                    // console.log("change percent", changePercentage)
-                    // console.log("leverage percent:",90/order.leverage );
-                    if(changePercentage > 90/order.leverage){
-                        closeOrder({userId, orderId:order.orderId})
+                if(order.asset === priceUpdate.asset){
+
+                    if(priceUpdate.bidWithSpread < order.openPrice){
+                        const changePercentage = ((order.openPrice - priceUpdate.bidWithSpread )/order.openPrice)*100;
+                        // console.log("change percent", changePercentage)
+                        // console.log("leverage percent:",90/order.leverage );
+                        if(changePercentage > 90/order.leverage){
+                            console.log("order liquidated:", order)
+                            closeOrder({userId, orderId:order.orderId})
+                        }
+                    }
+                }
+            }
+             if(order.leverage > 1 && order.type ==="sell"){
+                if(order.asset === priceUpdate.asset){
+                    
+                    if(priceUpdate.askWithSpread > order.openPrice){
+                        // console.log("updated price: ", priceUpdate);
+                        // console.log("order: ", order)
+                        const changePercentage = ((priceUpdate.askWithSpread - order.openPrice)/order.openPrice)*100;
+                        // console.log("changePercentage: ", changePercentage);
+                        if(changePercentage > 90/order.leverage){
+                            console.log("order liquidated:", order)
+                            closeOrder({userId, orderId:order.orderId})
+                        }
                     }
                 }
             }
@@ -41,8 +60,8 @@ const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
             userOrders?.splice(orderIndex,1)
             
             const closePrice = order.type==="buy"
-            ? latestPrice.get(order.asset)?.ask
-            : latestPrice.get(order.asset)?.bid
+            ? latestPrice.get(order.asset)?.bid
+            : latestPrice.get(order.asset)?.ask
             
             const pnl = order.type === "buy"
             ? ((closePrice!) - (order.openPrice)) * order.quantity
@@ -107,7 +126,9 @@ async function listenToOrders() {
                             const openPrice = data.type ==="buy"
                             ?latestPrice.get(data.asset)?.bid!
                             :latestPrice.get(data.asset)?.ask!
-                            
+
+                            console.log("checking data.type", data.type);
+
                             if(balance >= data.margin){
                                 const createdOrder:Trade = {
                                     // action:data.action,
@@ -121,18 +142,21 @@ async function listenToOrders() {
                                 leverage:data.leverage,
                                 status:data.status,
                                 reqStatus:"success"
-                            }
-                            userBalance.set(data.userId, balance - data.margin)
+                                }
+                                userBalance.set(data.userId, balance - data.margin)
                             
-                            // console.log("users balance after placing order",userBalance)
+                             // console.log("users balance after placing order",userBalance)
                             
-                            if(!openOrders.has(userId)) openOrders.set(userId, []);
-                            openOrders.get(userId)?.push(createdOrder)
-                            console.log("openOrders:", openOrders);
-                            await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
+                             if(!openOrders.has(userId)) openOrders.set(userId, []);
+                             openOrders.get(userId)?.push(createdOrder)
                             
-                            console.log("order processed from engine", createdOrder)
-                        }else{
+                                // console.log("openOrders:", openOrders);
+                                await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
+                            
+                                console.log("order processed from engine", createdOrder)
+                                // console.log("openOrders of a userrrr", openOrders.get(userId))
+                        }
+                        else{
                             const createdOrder:Trade = {
                                 action:data.action,
                                 userId:data.userId,
@@ -147,8 +171,8 @@ async function listenToOrders() {
                                 reqStatus:"failed"
                             }
                             await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
-                            
-                            console.log("order processed from engine", createdOrder)
+                            console.log("insufficient balance:", userBalance.get(data.userId))
+                            console.log("order processed from engine (else condition):", createdOrder)
                         }
                     }
                     
@@ -156,12 +180,13 @@ async function listenToOrders() {
                         const userId = data.userId;
                         const orderId = data.orderId;
                         const status = data.status;
-                        console.log("checking the logs of close order in engine:", userId, orderId, status);
+                        // console.log("checking the logs of close order in engine:", userId, orderId, status);
                         closeOrder({userId, orderId})
                         
                     }
                     
                     else if(data.action === "PRICE_UPDATE"){
+                        
                         latestPrice.set(data.asset, {
                             ask:data.askWithSpread,
                             bid:data.bidWithSpread, 

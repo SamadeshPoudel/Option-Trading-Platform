@@ -28,7 +28,7 @@ const columnWidths = {
   margin: "w-[12%]",
   pnl: "w-[14%]",
   action: "w-[10%]",
-  closedAt: "w-[14%]",
+  // closedAt: "w-[14%]",
 }
 
 export function OrderTable() {
@@ -89,7 +89,7 @@ export function OrderTable() {
               <div className={`${columnWidths.qty} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Qty</div>
               <div className={`${columnWidths.leverage} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Leverage</div>
               <div className={`${columnWidths.entry} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Entry</div>
-              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Margin</div>
+              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Amount</div>
               <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-3`}>PnL</div>
               <div className={`${columnWidths.action} text-right text-gray-400 text-xs font-medium py-2 px-3 pr-5`}>Action</div>
             </div>
@@ -187,9 +187,9 @@ export function OrderTable() {
               <div className={`${columnWidths.leverage} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Leverage</div>
               <div className={`${columnWidths.entry} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Entry</div>
               <div className={`${columnWidths.exit} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Exit</div>
-              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Margin</div>
+              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Amount</div>
               <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-3`}>PnL</div>
-              <div className={`${columnWidths.closedAt} text-right text-gray-400 text-xs font-medium py-2 px-3 pr-5`}>Closed At</div>
+              {/* <div className={`${columnWidths.closedAt} text-right text-gray-400 text-xs font-medium py-2 px-3 pr-5`}>Closed At</div> */}
             </div>
           </div>
 
@@ -248,9 +248,9 @@ export function OrderTable() {
                       );
                     })()}
                   </div>
-                  <div className={`${columnWidths.closedAt} text-right text-gray-400 text-[10px] py-2 px-3`}>
+                  {/* <div className={`${columnWidths.closedAt} text-right text-gray-400 text-[10px] py-2 px-3`}>
                     {trade.closedAt ? new Date(trade.closedAt).toLocaleString() : '-'}
-                  </div>
+                  </div> */}
                 </div>
               ))
             ) : (

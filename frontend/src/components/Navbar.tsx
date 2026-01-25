@@ -1,16 +1,39 @@
 import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react"
 import { SiDelta } from "react-icons/si";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const openTrades = useTradeStore(state => state.openTrades);
   const livePrices = useAssetStore(state => state.livePrices);
+  const [balance, setBalance] = useState(0)
 
   // Dummy user data (replace with real data later)
   const user = {
     name: "Samadesh",
-    balance: 10000.00,
+    // balance: 10000.00,
   };
+
+  const fetchBalance = async () => {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/balance?userId=03d60c5f-99ef-4812-bfc1-49e52d44b3c5`, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      // body: JSON.stringify({
+      //   "userId": "03d60c5f-99ef-4812-bfc1-49e52d44b3c5"
+      // })
+    })
+    const data = await res.json();
+    // console.log("users data from fetchBalance:", data);
+    setBalance(data.data);
+  }
+  
+  useEffect(() => {
+    setInterval(()=>{
+      fetchBalance();
+    },2000)
+  }, [])
+  
 
   // Calculate unrealised PnL
   const calculateUnrealisedPnL = () => {
@@ -21,8 +44,8 @@ const Navbar = () => {
 
     for (const trade of openTrades) {
       const asset = trade.asset as Asset;
-      const currentPrice = trade.type === "buy" 
-        ? livePrices[asset]?.bid 
+      const currentPrice = trade.type === "buy"
+        ? livePrices[asset]?.bid
         : livePrices[asset]?.ask;
       const openPrice = Number(trade.openPrice) / 10000;
 
@@ -49,30 +72,25 @@ const Navbar = () => {
   return (
     <nav className="flex justify-between items-center bg-[#0a0a0d] text-white px-4 h-14 flex-shrink-0 border-b border-[#1a1a1f]">
       {/* Left: Logo */}
-       <div className="flex items-center">
+      <div className="flex items-center">
         <SiDelta className="size-32" />
       </div>
 
       {/* Right: PnL, Balance, Profile */}
       <div className="flex items-center gap-3">
-        
+
         {/* Unrealised PnL */}
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg `}> 
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg `}>
           <div className="flex items-center gap-1.5">
-            {/* {isPositive ? (
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-            )} */}
             <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
               Unrealised
             </span>
           </div>
-                     {isPositive ? (
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-            )}
+          {isPositive ? (
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+          ) : (
+            <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+          )}
           <span className={`text-sm font-semibold ${pnlColor}`}>
             {!isValid ? (
               "--"
@@ -81,7 +99,7 @@ const Navbar = () => {
                 {isPositive ? "+" : ""}${unrealisedPnL.toFixed(2)}
               </>
             )}
-            
+
           </span>
 
         </div>
@@ -97,7 +115,8 @@ const Navbar = () => {
               Net Balance
             </span>
             <span className="text-sm font-semibold text-yellow-400">
-              ${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {/* ${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} */}
+              {(balance/10000).toFixed(2)}
             </span>
           </div>
         </div>

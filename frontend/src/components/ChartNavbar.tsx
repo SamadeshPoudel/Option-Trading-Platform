@@ -72,7 +72,7 @@ export function ChartNavbar() {
     fetchPriceChanges();
     
     // Refresh every 5 minutes
-    const interval = setInterval(fetchPriceChanges, 5 * 60 * 1000);
+    const interval = setInterval(fetchPriceChanges, 2000); //5 * 60 * 1000
     return () => clearInterval(interval);
   }, []);
 

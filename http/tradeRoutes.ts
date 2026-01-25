@@ -66,7 +66,8 @@ router.post("/trade/create", async (req:express.Request, res:express.Response)=>
     
         if(parsedResult.reqStatus==='success'){
             return res.status(200).json({msg:"create order placed successful", orderId:parsedResult.orderId})
-        }else if(parsedResult.reqStatus==='failed'){
+        }
+        else if(parsedResult.reqStatus==='failed'){
             return res.status(400).json({msg:"order failed due to insufficient balance"})
         }
     
@@ -140,8 +141,8 @@ router.post("/trade/close", async(req:express.Request,res:express.Response)=>{
 
 router.get("/balance", async(req:express.Request, res:express.Response)=>{
     try {
-        const validatedData = userIdSchema.parse(req.body);
-        const {userId} = validatedData;
+        // const validatedData = userIdSchema.parse(req.query);
+        const {userId} = req.query;
         if(!userId){
             return res.status(404).json({msg:"Missing userId!"})
         }
@@ -149,7 +150,7 @@ router.get("/balance", async(req:express.Request, res:express.Response)=>{
         const responsePromise = new Promise(async(resolve, reject)=>{
             const timeout = setTimeout(()=>{
                 reject(new Error("Timeout"))
-            }, 5000);
+            }, 10000);
 
             await subcribe.subscribe(`${userId}`, (data)=>{
                 clearTimeout(timeout);
