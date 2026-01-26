@@ -8,9 +8,15 @@ import '@fontsource/inter/400.css'  // Regular
 import '@fontsource/inter/500.css'  // mediumm
 import '@fontsource/inter/600.css'  // semibold
 import '@fontsource/inter/700.css'  // bold
+import { Toaster } from 'sonner'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+         <Toaster
+      position="bottom-right"
+      theme="dark"
+      richColors
+    />
   </StrictMode>,
 )

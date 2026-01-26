@@ -11,7 +11,7 @@ if(process.env.NODE_ENV !=="production"){
 app.use('/api', tradeRoutes )
 
 app.get("/health", (req, res)=>{
-    return res.status(200).json({msg:"Healthy thulo lauda"})
+    return res.status(200).json({msg:"Healthy boy!"})
 })
 
 app.listen("5000", ()=>{

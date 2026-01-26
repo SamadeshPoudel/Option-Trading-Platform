@@ -116,7 +116,7 @@ const Navbar = () => {
             </span>
             <span className="text-sm font-semibold text-yellow-400">
               {/* ${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} */}
-              {(balance/10000).toFixed(2)}
+              ${(balance/10000).toFixed(2)}
             </span>
           </div>
         </div>

@@ -9,6 +9,7 @@ import solanaLogo from "../assets/SolanaLogo.svg"
 import ethereumLogo from "../assets/EthereumLogo.svg"
 import bitcoinLogo from "../assets/bitcoinLogo.svg"
 import type { Asset } from "store/useStore"
+import { toast } from "sonner"
 
 // Asset logos config
 const assetLogos: Record<Asset, string> = {
@@ -51,6 +52,13 @@ const BuyTab = () => {
       })
     })
     const data = await res.json();
+    if(res.status===200){
+      toast.success("order placed successfully!")
+    }else if(res.status===400){
+      toast.error("Insufficient balance!")
+    }else{
+      toast.error("something went wrong, please try later")
+    }
     fetchOrders()
     console.log("data from /trade/create", data);
   }

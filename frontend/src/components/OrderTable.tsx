@@ -9,6 +9,7 @@ import { useEffect } from "react"
 import solanaLogo from "../assets/SolanaLogo.svg"
 import ethereumLogo from "../assets/EthereumLogo.svg"
 import bitcoinLogo from "../assets/bitcoinLogo.svg"
+import { toast } from "sonner"
 
 // Asset logos config
 const assetLogos: Record<Asset, string> = {
@@ -52,6 +53,13 @@ export function OrderTable() {
         orderId
       })
     })
+    if(res.status===200){
+      toast.success("order closed successfully!")
+    }else if(res.status===400){
+      toast.info("order alredy closed! please try refreshing the page")
+    }else{
+      toast.error("something went wrong, please try later")
+    }
     const data = await res.json();
     fetchOrders();
     console.log("data after closing order", data)
