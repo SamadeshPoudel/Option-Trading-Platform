@@ -2,6 +2,7 @@ import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react"
 import { SiDelta } from "react-icons/si";
 import { useEffect, useState } from "react";
+import { signIn } from "@/lib/auth-client";
 
 const Navbar = () => {
   const openTrades = useTradeStore(state => state.openTrades);
@@ -27,13 +28,13 @@ const Navbar = () => {
     // console.log("users data from fetchBalance:", data);
     setBalance(data.data);
   }
-  
+
   useEffect(() => {
-    setInterval(()=>{
+    setInterval(() => {
       fetchBalance();
-    },2000)
+    }, 2000)
   }, [])
-  
+
 
   // Calculate unrealised PnL
   const calculateUnrealisedPnL = () => {
@@ -68,6 +69,10 @@ const Navbar = () => {
   const isPositive = unrealisedPnL >= 0;
   const pnlColor = isPositive ? "text-emerald-400" : "text-red-400";
   const pnlBgColor = isPositive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20";
+
+  //   const handleClick = ()=>{
+  //   console.log("clicked!")
+  // }
 
   return (
     <nav className="flex justify-between items-center bg-[#0a0a0d] text-white px-4 h-14 flex-shrink-0 border-b border-[#1a1a1f]">
@@ -116,7 +121,7 @@ const Navbar = () => {
             </span>
             <span className="text-sm font-semibold text-yellow-400">
               {/* ${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} */}
-              ${(balance/10000).toFixed(2)}
+              ${(balance / 10000).toFixed(2)}
             </span>
           </div>
         </div>
@@ -125,21 +130,19 @@ const Navbar = () => {
         <div className="h-6 w-px bg-[#2a2a30]" />
 
         {/* User Profile */}
-        <div className="flex items-center gap-2 cursor-pointer hover:bg-[#1a1a1f] px-2 py-1.5 rounded-lg transition-colors">
+        {/* <div className="flex items-center gap-2 cursor-pointer hover:bg-[#1a1a1f] px-2 py-1.5 rounded-lg transition-colors">
           <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
             <span className="font-semibold text-sm text-white">
               {user.name.charAt(0).toUpperCase()}
             </span>
           </div>
-          {/* <div className="flex flex-col">
-            <span className="text-xs font-medium text-white leading-none">
-              {user.name}
-            </span>
-            <span className="text-[10px] text-gray-500 leading-none mt-0.5">
-              Trader
-            </span>
-          </div> */}
-        </div>
+        </div> */}
+        <button
+          className="cursor-pointer"
+          onClick={() => signIn.social({
+            provider: "google",
+            callbackURL: "http://localhost:5173"
+          })}>signIn</button>
       </div>
     </nav>
   )
