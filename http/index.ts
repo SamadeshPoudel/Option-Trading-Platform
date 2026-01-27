@@ -1,7 +1,7 @@
 import express from "express";
 import tradeRoutes from "./tradeRoutes"
 import cors from "cors";
-import { toNodeHandler } from "better-auth/node";
+import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import { auth } from "./auth";
 
 const app = express();

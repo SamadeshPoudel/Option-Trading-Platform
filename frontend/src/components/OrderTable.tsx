@@ -10,6 +10,7 @@ import solanaLogo from "../assets/SolanaLogo.svg"
 import ethereumLogo from "../assets/EthereumLogo.svg"
 import bitcoinLogo from "../assets/bitcoinLogo.svg"
 import { toast } from "sonner"
+import { authClient } from "@/lib/auth-client"
 
 // Asset logos config
 const assetLogos: Record<Asset, string> = {
@@ -38,6 +39,8 @@ export function OrderTable() {
   const fetchOrders = useTradeStore(state => state.fetchOrders);
   const livePrices = useAssetStore(state => state.livePrices);
 
+  const { data: session } = authClient.useSession();
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
@@ -49,15 +52,15 @@ export function OrderTable() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        userId: "03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
+        userId: session?.user.id,
         orderId
       })
     })
-    if(res.status===200){
+    if (res.status === 200) {
       toast.success("order closed successfully!")
-    }else if(res.status===400){
+    } else if (res.status === 400) {
       toast.info("order alredy closed! please try refreshing the page")
-    }else{
+    } else {
       toast.error("something went wrong, please try later")
     }
     const data = await res.json();
@@ -68,18 +71,18 @@ export function OrderTable() {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#14151B] rounded-lg border border-[#2a2a30]">
       <Tabs defaultValue="open-order" className="flex flex-col h-full overflow-hidden">
-        
+
         {/* Tabs Header - Always Visible */}
         <div className="flex-shrink-0 border-b border-[#2a2a30] px-3 py-2 bg-[#14151B]">
           <TabsList className="h-8 bg-[#1a1a1f] p-1 rounded-md">
-            <TabsTrigger 
-              value="open-order" 
+            <TabsTrigger
+              value="open-order"
               className="text-gray-400 text-xs data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none rounded px-3 py-1 cursor-pointer transition-all"
             >
               Open Orders
             </TabsTrigger>
-            <TabsTrigger 
-              value="closed-order" 
+            <TabsTrigger
+              value="closed-order"
               className="text-gray-400 text-xs data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none rounded px-3 py-1 cursor-pointer transition-all"
             >
               Closed Orders
@@ -107,18 +110,18 @@ export function OrderTable() {
           <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
             {openTrades.length > 0 ? (
               openTrades.map((trade) => (
-                <div 
-                  key={trade.orderId} 
+                <div
+                  key={trade.orderId}
                   className="flex w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
                   {/* ...existing row content... */}
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 flex-shrink-0">
-                        <img 
-                          src={assetLogos[trade.asset as Asset]} 
-                          alt={`${trade.asset}-logo`} 
-                          className="w-full h-full object-contain" 
+                        <img
+                          src={assetLogos[trade.asset as Asset]}
+                          alt={`${trade.asset}-logo`}
+                          className="w-full h-full object-contain"
                         />
                       </div>
                       <span className="font-medium text-white text-xs">{trade.asset}</span>
@@ -167,8 +170,8 @@ export function OrderTable() {
                     })()}
                   </div>
                   <div className={`${columnWidths.action} text-right py-2 px-3`}>
-                    <button 
-                      className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs font-medium hover:bg-red-500/30 transition-colors border border-red-500/30 cursor-pointer" 
+                    <button
+                      className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs font-medium hover:bg-red-500/30 transition-colors border border-red-500/30 cursor-pointer"
                       onClick={() => handleClose({ orderId: trade.orderId })}
                     >
                       Close
@@ -205,17 +208,17 @@ export function OrderTable() {
           <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
             {closedTrades.length > 0 ? (
               closedTrades.map((trade) => (
-                <div 
-                  key={trade.orderId} 
+                <div
+                  key={trade.orderId}
                   className="flex w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 flex-shrink-0">
-                        <img 
-                          src={assetLogos[trade.asset as Asset]} 
-                          alt={`${trade.asset}-logo`} 
-                          className="w-full h-full object-contain" 
+                        <img
+                          src={assetLogos[trade.asset as Asset]}
+                          alt={`${trade.asset}-logo`}
+                          className="w-full h-full object-contain"
                         />
                       </div>
                       <span className="font-medium text-white text-xs">{trade.asset}</span>

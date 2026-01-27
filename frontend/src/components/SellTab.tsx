@@ -10,6 +10,7 @@ import ethereumLogo from "../assets/EthereumLogo.svg"
 import bitcoinLogo from "../assets/bitcoinLogo.svg"
 import type { Asset } from "store/useStore"
 import { toast } from "sonner"
+import { authClient } from "@/lib/auth-client"
 
 // Asset logos config
 const assetLogos: Record<Asset, string> = {
@@ -28,6 +29,9 @@ const SellTab = () => {
   const [leverage, setLeverage] = useState(1);
   const [isAmountFocused, setIsAmountFocused] = useState(false);
 
+  const { data: session } = authClient.useSession()
+
+
   // Calculate quantity whenever margin, leverage, or price changes
   useEffect(() => {
     if (livePrice?.ask) {
@@ -44,18 +48,20 @@ const SellTab = () => {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        userId: "03d60c5f-99ef-4812-bfc1-49e52d44b3c5",
+        userId: session?.user?.id,
         asset: selectedSymbol,
         type: "sell",
         margin: amount,
         leverage: leverage
       })
     })
-    if(res.status===200){
+    if (res.status === 200) {
       toast.success("order placed successfully!")
-    }else if(res.status===400){
+    } else if (res.status === 400) {
       toast.error("Insufficient balance!")
-    }else{
+    } else if (res.status === 401) {
+      toast.warning("sign in to place an order")
+    } else {
       toast.error("something went wrong, please try later")
     }
     const data = await res.json();
@@ -90,10 +96,10 @@ const SellTab = () => {
               {quantity.toFixed(4)}
             </span>
             <div className="w-5 h-5 flex items-center justify-center">
-              <img 
-                src={assetLogos[selectedSymbol]} 
-                alt={`${selectedSymbol}-logo`} 
-                className="w-full h-full object-contain" 
+              <img
+                src={assetLogos[selectedSymbol]}
+                alt={`${selectedSymbol}-logo`}
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
@@ -119,7 +125,7 @@ const SellTab = () => {
       {/* Amount - User Input */}
       <div className="flex flex-col gap-2">
         <p className="text-xs text-gray-400">Amount</p>
-        <Card 
+        <Card
           className={`
             h-10 bg-[#202127] border-[#2a2a30] px-3 py-2 transition-all duration-200 rounded-sm
             ${isAmountFocused ? 'ring-1 ring-red-500/50 border-red-500/50' : ''}
@@ -128,11 +134,19 @@ const SellTab = () => {
           <div className="flex justify-between items-center h-full w-full">
             <input
               type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value === '' ? 0 : Number(e.target.value))}
+              value={amount === 0 && isAmountFocused ? '' : amount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setAmount(0);
+                } else {
+                  setAmount(Number(val));
+                }
+              }}
               onFocus={() => setIsAmountFocused(true)}
               onBlur={() => setIsAmountFocused(false)}
               min={0}
+              placeholder="0"
               className="
                 bg-transparent text-base font-semibold text-white w-full
                 outline-none border-none focus:outline-none focus:ring-0
@@ -171,10 +185,10 @@ const SellTab = () => {
         <div className="flex justify-between text-xs">
           <p className="text-gray-400">Asset</p>
           <div className="flex items-center gap-1.5">
-            <img 
-              src={assetLogos[selectedSymbol]} 
-              alt={`${selectedSymbol}-logo`} 
-              className="w-3.5 h-3.5 object-contain" 
+            <img
+              src={assetLogos[selectedSymbol]}
+              alt={`${selectedSymbol}-logo`}
+              className="w-3.5 h-3.5 object-contain"
             />
             <p className="font-medium">{selectedSymbol}</p>
           </div>

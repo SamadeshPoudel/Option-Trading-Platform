@@ -1,32 +1,49 @@
 import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
-import { Wallet, TrendingUp, TrendingDown } from "lucide-react"
+import { Wallet, TrendingUp, TrendingDown, LogOut } from "lucide-react"
 import { SiDelta } from "react-icons/si";
-import { useEffect, useState } from "react";
-import { signIn } from "@/lib/auth-client";
+import { useEffect, useRef, useState } from "react";
+import { authClient, signIn, signOut } from "@/lib/auth-client";
+import { Button } from "./ui/button";
+import { FcGoogle } from "react-icons/fc";
+
 
 const Navbar = () => {
   const openTrades = useTradeStore(state => state.openTrades);
   const livePrices = useAssetStore(state => state.livePrices);
   const [balance, setBalance] = useState(0)
+  const [showUserModal, setShowUserModal] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  // Dummy user data (replace with real data later)
-  const user = {
-    name: "Samadesh",
-    // balance: 10000.00,
-  };
+  const {
+    data: session,
+  } = authClient.useSession()
+
+  // Close modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setShowUserModal(false);
+      }
+    };
+    if (showUserModal) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserModal]);
+
 
   const fetchBalance = async () => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/balance?userId=03d60c5f-99ef-4812-bfc1-49e52d44b3c5`, {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/balance?userId=${session?.user?.id}`, {
       headers: {
         "Content-Type": "application/json"
       },
-      // body: JSON.stringify({
-      //   "userId": "03d60c5f-99ef-4812-bfc1-49e52d44b3c5"
-      // })
     })
     const data = await res.json();
-    // console.log("users data from fetchBalance:", data);
-    setBalance(data.data);
+    console.log(data.data)
+    console.log("typeOf:", typeof data.data)
+    setBalance(Number(data.data) || 0);
   }
 
   useEffect(() => {
@@ -68,11 +85,11 @@ const Navbar = () => {
   const { value: unrealisedPnL, isValid } = calculateUnrealisedPnL();
   const isPositive = unrealisedPnL >= 0;
   const pnlColor = isPositive ? "text-emerald-400" : "text-red-400";
-  const pnlBgColor = isPositive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20";
 
-  //   const handleClick = ()=>{
-  //   console.log("clicked!")
-  // }
+  const handleLogout = async () => {
+    await signOut();
+    setShowUserModal(false);
+  };
 
   return (
     <nav className="flex justify-between items-center bg-[#0a0a0d] text-white px-4 h-14 flex-shrink-0 border-b border-[#1a1a1f]">
@@ -121,7 +138,7 @@ const Navbar = () => {
             </span>
             <span className="text-sm font-semibold text-yellow-400">
               {/* ${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} */}
-              ${(balance / 10000).toFixed(2)}
+              ${(Number(balance / 10000).toFixed(2))}
             </span>
           </div>
         </div>
@@ -129,20 +146,68 @@ const Navbar = () => {
         {/* Divider */}
         <div className="h-6 w-px bg-[#2a2a30]" />
 
-        {/* User Profile */}
-        {/* <div className="flex items-center gap-2 cursor-pointer hover:bg-[#1a1a1f] px-2 py-1.5 rounded-lg transition-colors">
-          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="font-semibold text-sm text-white">
-              {user.name.charAt(0).toUpperCase()}
-            </span>
+
+        {/* User Profile with Modal */}
+        {session?.user ? (
+          <div className="relative" ref={modalRef}>
+            {/* User Avatar Button */}
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:bg-[#1a1a1f] px-2 py-1.5 rounded-lg transition-colors"
+              onClick={() => setShowUserModal(!showUserModal)}
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="font-semibold text-sm text-white">
+                  {session.user.name?.charAt(0).toUpperCase() ?? "U"}
+                </span>
+              </div>
+            </div>
+            {/* User Modal Dropdown */}
+            {showUserModal && (
+              <div className="absolute right-0 top-12 w-64 bg-[#0a0a0d] border border-[#2a2a30] rounded-lg shadow-xl z-50">
+                {/* User Info */}
+                <div className="px-4 py-3 border-b border-[#2a2a30]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="font-semibold text-white">
+                        {session.user.name?.charAt(0).toUpperCase() ?? "U"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-white">
+                        {session.user.name ?? "User"}
+                      </span>
+                      <span className="text-xs text-gray-400 truncate max-w-[160px]">
+                        {session.user.email}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {/* Logout Button */}
+                <div className="p-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        </div> */}
-        <button
-          className="cursor-pointer"
-          onClick={() => signIn.social({
-            provider: "google",
-            callbackURL: "http://localhost:5173"
-          })}>signIn</button>
+        ) : (
+          <Button
+            variant="outline"
+            className="cursor-pointer bg-[#1a1a1f] border-[#2a2a30] text-gray-200 hover:bg-[#252530] hover:border-[#3a3a45] hover:text-white transition-all duration-200 gap-2"
+            onClick={() => signIn.social({
+              provider: "google",
+              callbackURL: "http://localhost:5173"
+            })}
+          >
+            <FcGoogle className="w-4 h-4" />
+            Sign in
+          </Button>
+        )}
       </div>
     </nav>
   )

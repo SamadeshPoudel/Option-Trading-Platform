@@ -8,40 +8,40 @@ await client.connect();
 const publisher = redisClient.duplicate();
 await publisher.connect()
 
-const latestPrice = new Map<string, {ask:number, bid:number, decimal:number}>()
-const userBalance = new Map<string,number>() //userId and balance
+const latestPrice = new Map<string, { ask: number, bid: number, decimal: number }>()
+const userBalance = new Map<string, number>() //userId and balance
 const openOrders = new Map<string, any[]>(); //userId as key and orders as array of object
 
-const DECIMAL_VALUE=10000;
+const DECIMAL_VALUE = 10000;
 
-const liquidateTrade = (priceUpdate:any)=>{
-    for(const [userId, orders] of openOrders){
-        for(const order of orders){
-            if(order.leverage > 1 && order.type ==="buy"){
-                if(order.asset === priceUpdate.asset){
+const liquidateTrade = (priceUpdate: any) => {
+    for (const [userId, orders] of openOrders) {
+        for (const order of orders) {
+            if (order.leverage > 1 && order.type === "buy") {
+                if (order.asset === priceUpdate.asset) {
 
-                    if(priceUpdate.bidWithSpread < order.openPrice){
-                        const changePercentage = ((order.openPrice - priceUpdate.bidWithSpread )/order.openPrice)*100;
+                    if (priceUpdate.bidWithSpread < order.openPrice) {
+                        const changePercentage = ((order.openPrice - priceUpdate.bidWithSpread) / order.openPrice) * 100;
                         // console.log("change percent", changePercentage)
                         // console.log("leverage percent:",90/order.leverage );
-                        if(changePercentage > 90/order.leverage){
+                        if (changePercentage > 90 / order.leverage) {
                             console.log("order liquidated:", order)
-                            closeOrder({userId, orderId:order.orderId})
+                            closeOrder({ userId, orderId: order.orderId })
                         }
                     }
                 }
             }
-             if(order.leverage > 1 && order.type ==="sell"){
-                if(order.asset === priceUpdate.asset){
-                    
-                    if(priceUpdate.askWithSpread > order.openPrice){
+            if (order.leverage > 1 && order.type === "sell") {
+                if (order.asset === priceUpdate.asset) {
+
+                    if (priceUpdate.askWithSpread > order.openPrice) {
                         // console.log("updated price: ", priceUpdate);
                         // console.log("order: ", order)
-                        const changePercentage = ((priceUpdate.askWithSpread - order.openPrice)/order.openPrice)*100;
+                        const changePercentage = ((priceUpdate.askWithSpread - order.openPrice) / order.openPrice) * 100;
                         // console.log("changePercentage: ", changePercentage);
-                        if(changePercentage > 90/order.leverage){
+                        if (changePercentage > 90 / order.leverage) {
                             console.log("order liquidated:", order)
-                            closeOrder({userId, orderId:order.orderId})
+                            closeOrder({ userId, orderId: order.orderId })
                         }
                     }
                 }
@@ -50,29 +50,29 @@ const liquidateTrade = (priceUpdate:any)=>{
     }
 }
 
-const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
-    if(openOrders.has(userId)){
+const closeOrder = async ({ userId, orderId }: { userId: string, orderId: string }) => {
+    if (openOrders.has(userId)) {
         const userOrders = openOrders.get(userId)!;
-        const orderIndex = userOrders?.findIndex(element=>element.orderId === orderId)!;
-        
-        if(orderIndex != -1){
+        const orderIndex = userOrders?.findIndex(element => element.orderId === orderId)!;
+
+        if (orderIndex != -1) {
             const order = userOrders[orderIndex];
-            userOrders?.splice(orderIndex,1)
-            
-            const closePrice = order.type==="buy"
-            ? latestPrice.get(order.asset)?.bid
-            : latestPrice.get(order.asset)?.ask
-            
+            userOrders?.splice(orderIndex, 1)
+
+            const closePrice = order.type === "buy"
+                ? latestPrice.get(order.asset)?.bid
+                : latestPrice.get(order.asset)?.ask
+
             const pnl = order.type === "buy"
-            ? ((closePrice!) - (order.openPrice)) * order.quantity
-            : ((order.openPrice) - (closePrice!)) * order.quantity;
-            
+                ? ((closePrice!) - (order.openPrice)) * order.quantity
+                : ((order.openPrice) - (closePrice!)) * order.quantity;
+
             const closedOrder = {
                 ...order,
                 closePrice,
                 pnl,
-                status:"close",
-                reqStatus:"success"
+                status: "close",
+                reqStatus: "success"
             }
 
             //take the current userBalance and then add with the margin*pnl to give them their balance after they close the order
@@ -84,165 +84,165 @@ const closeOrder = async({userId, orderId}:{userId:string, orderId:string})=>{
                 "engine-response",
                 "*",
                 {
-                    data:JSON.stringify(closedOrder)
+                    data: JSON.stringify(closedOrder)
                 }
             )
-            
+
             await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
-        }else{
+        } else {
             const closedOrder = {
-                reqStatus:"failed"
+                reqStatus: "failed"
             }
             await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
         }
-    }else{
+    } else {
         const closedOrder = {
-            reqStatus:"failed"
+            reqStatus: "failed"
         }
         await publisher.publish(`${orderId}`, JSON.stringify(closedOrder))
     }
 }
 
 async function listenToOrders() {
-    while(true){
+    while (true) {
         try {
-            const orderReqFromHttpServer:any = await client.XREAD(
-                {key:"trade", id:'$'},
-                {BLOCK:0, COUNT:1}
+            const orderReqFromHttpServer: any = await client.XREAD(
+                { key: "trade", id: '$' },
+                { BLOCK: 0, COUNT: 1 }
             )
-            
+
             // console.log(JSON.stringify(orderReqFromHttpServer, null, 2))
-            if(orderReqFromHttpServer){
-                for(const obj of orderReqFromHttpServer){
-                    for(const message of obj.messages){
-                        const data=JSON.parse(message.message.data)
-                        
-                        if(data.action === "CREATE_ORDER"){
+            if (orderReqFromHttpServer) {
+                for (const obj of orderReqFromHttpServer) {
+                    for (const message of obj.messages) {
+                        const data = JSON.parse(message.message.data)
+
+                        if (data.action === "CREATE_ORDER") {
                             const userId = data.userId;
-                            if(!userBalance.has(userId)) userBalance.set(userId, 500*DECIMAL_VALUE)
-                            const balance = userBalance.get(data.userId)?? 0
-                            const exposure = (data.margin)* data.leverage //margin * leverage
-                            
-                            const openPrice = data.type ==="buy"
-                            ?latestPrice.get(data.asset)?.bid!
-                            :latestPrice.get(data.asset)?.ask!
+                            if (!userBalance.has(userId)) userBalance.set(userId, 500 * DECIMAL_VALUE)
+                            const balance = userBalance.get(data.userId) ?? 0
+                            const exposure = (data.margin) * data.leverage //margin * leverage
+
+                            const openPrice = data.type === "buy"
+                                ? latestPrice.get(data.asset)?.bid!
+                                : latestPrice.get(data.asset)?.ask!
 
                             console.log("checking data.type", data.type);
 
-                            if(balance >= data.margin){
-                                const createdOrder:Trade = {
+                            if (balance >= data.margin) {
+                                const createdOrder: Trade = {
                                     // action:data.action,
-                                    userId:data.userId,
-                                    orderId:data.orderId,
-                                asset:data.asset,
-                                openPrice,
-                                type:data.type,
-                                quantity:exposure/openPrice!,
-                                margin:data.margin,
-                                leverage:data.leverage,
-                                status:data.status,
-                                reqStatus:"success"
+                                    userId: data.userId,
+                                    orderId: data.orderId,
+                                    asset: data.asset,
+                                    openPrice,
+                                    type: data.type,
+                                    quantity: exposure / openPrice!,
+                                    margin: data.margin,
+                                    leverage: data.leverage,
+                                    status: data.status,
+                                    reqStatus: "success"
                                 }
                                 userBalance.set(data.userId, balance - data.margin)
-                            
-                             // console.log("users balance after placing order",userBalance)
-                            
-                             if(!openOrders.has(userId)) openOrders.set(userId, []);
-                             openOrders.get(userId)?.push(createdOrder)
-                            
+
+                                // console.log("users balance after placing order",userBalance)
+
+                                if (!openOrders.has(userId)) openOrders.set(userId, []);
+                                openOrders.get(userId)?.push(createdOrder)
+
                                 // console.log("openOrders:", openOrders);
                                 await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
-                            
+
                                 console.log("order processed from engine", createdOrder)
                                 // console.log("openOrders of a userrrr", openOrders.get(userId))
-                        }
-                        else{
-                            const createdOrder:Trade = {
-                                action:data.action,
-                                userId:data.userId,
-                                orderId:data.orderId,
-                                asset:data.asset,
-                                openPrice,
-                                type:data.type,
-                                quantity:exposure/openPrice!,
-                                margin:data.margin,
-                                leverage:data.leverage,
-                                status:data.status,
-                                reqStatus:"failed"
                             }
-                            await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
-                            console.log("insufficient balance:", userBalance.get(data.userId))
-                            console.log("order processed from engine (else condition):", createdOrder)
-                        }
-                    }
-                    
-                    else if(data.action ==="CLOSE_ORDER"){
-                        const userId = data.userId;
-                        const orderId = data.orderId;
-                        const status = data.status;
-                        // console.log("checking the logs of close order in engine:", userId, orderId, status);
-                        closeOrder({userId, orderId})
-                        
-                    }
-                    
-                    else if(data.action === "PRICE_UPDATE"){
-                        
-                        latestPrice.set(data.asset, {
-                            ask:data.askWithSpread,
-                            bid:data.bidWithSpread, 
-                            decimal:data.decimal
-                        })
-                        liquidateTrade(data)
-                    }
-
-                    else if(data.action ==="CHECK_BALANCE"){
-                        const userId = data.userId;
-                        const balance = userBalance.get(userId);
-                        //it is setting the userBalance to 500 when the fe fetches the balance; whenever new usr come to the platform
-                        if(!userBalance.has(userId)){
-                            userBalance.set(userId, 5000000);
+                            else {
+                                const createdOrder: Trade = {
+                                    action: data.action,
+                                    userId: data.userId,
+                                    orderId: data.orderId,
+                                    asset: data.asset,
+                                    openPrice,
+                                    type: data.type,
+                                    quantity: exposure / openPrice!,
+                                    margin: data.margin,
+                                    leverage: data.leverage,
+                                    status: data.status,
+                                    reqStatus: "failed"
+                                }
+                                await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
+                                console.log("insufficient balance:", userBalance.get(data.userId))
+                                console.log("order processed from engine (else condition):", createdOrder)
+                            }
                         }
 
-                        const checkedBalance = {
-                            action:data.action,
-                            balance,
-                            reqStatus:"success"
+                        else if (data.action === "CLOSE_ORDER") {
+                            const userId = data.userId;
+                            const orderId = data.orderId;
+                            const status = data.status;
+                            // console.log("checking the logs of close order in engine:", userId, orderId, status);
+                            closeOrder({ userId, orderId })
+
                         }
 
-                        await publisher.publish(`${userId}`, JSON.stringify(checkedBalance))
-                    }
+                        else if (data.action === "PRICE_UPDATE") {
 
-                    else if(data.action==="CHECK_OPEN_ORDERS"){
-                        const userId = data.userId;
-                        const orders = openOrders.get(userId)
-                        const checkOpenOrders = {
-                            action:data.action,
-                            openOrders:orders,
-                            reqStatus:"success"
+                            latestPrice.set(data.asset, {
+                                ask: data.askWithSpread,
+                                bid: data.bidWithSpread,
+                                decimal: data.decimal
+                            })
+                            liquidateTrade(data)
                         }
 
-                        await publisher.publish(`${userId}`, JSON.stringify(checkOpenOrders))
+                        else if (data.action === "CHECK_BALANCE") {
+                            const userId = data.userId;
+                            const balance = userBalance.get(userId);
+                            //it is setting the userBalance to 500 when the fe fetches the balance; whenever new usr come to the platform
+                            if (!userBalance.has(userId)) {
+                                userBalance.set(userId, 5000000);
+                            }
+
+                            const checkedBalance = {
+                                action: data.action,
+                                balance,
+                                reqStatus: "success"
+                            }
+
+                            await publisher.publish(`${userId}`, JSON.stringify(checkedBalance))
+                        }
+
+                        else if (data.action === "CHECK_OPEN_ORDERS") {
+                            const userId = data.userId;
+                            const orders = openOrders.get(userId)
+                            const checkOpenOrders = {
+                                action: data.action,
+                                openOrders: orders,
+                                reqStatus: "success"
+                            }
+
+                            await publisher.publish(`${userId}`, JSON.stringify(checkOpenOrders))
+                        }
                     }
                 }
             }
+
+        } catch (error) {
+            console.error("Error while reading from stream:", error);
+            await new Promise(resolve => setTimeout(resolve, 1000)) //delay 1s before trying again
         }
-        
-    } catch (error) {
-        console.error("Error while reading from stream:", error);
-        await new Promise(resolve => setTimeout(resolve, 1000)) //delay 1s before trying again
     }
 }
-}
-const takeSnapshot = async()=>{
+const takeSnapshot = async () => {
     const snapShot = {
         openOrders: Array.from(openOrders.entries()),
         userBalance: Array.from(userBalance.entries())
     }
     await Bun.write("./snapshot.json", JSON.stringify(snapShot))
-    
+
 }
 
-const loadSnapshot=async ()=>{
+const loadSnapshot = async () => {
     const data = await Bun.file("./snapshot.json").json()
     for (const [key, value] of data.openOrders as [string, any[]][]) {
         openOrders.set(key, value);
@@ -250,7 +250,7 @@ const loadSnapshot=async ()=>{
     for (const [key, value] of data.userBalance as [string, number][]) {
         userBalance.set(key, value);
     }
-    console.log("snapshot loaded",openOrders)
+    console.log("snapshot loaded", openOrders)
     console.log("snapshot loaded", userBalance)
 }
 
