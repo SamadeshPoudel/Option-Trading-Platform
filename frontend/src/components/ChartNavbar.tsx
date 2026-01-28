@@ -113,33 +113,30 @@ export function ChartNavbar() {
   const inactiveStyle = "bg-[#1a1a1f] text-gray-400 hover:bg-[#252529] hover:text-white border-[#2a2a30]";
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
-      {/* Left side: Interval + 24h Changes */}
-      <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1.5 md:gap-0">
+      {/* Row 1: Interval + Period buttons (same line on all screens) */}
+      <div className="flex items-center justify-between gap-2 md:gap-4">
         {/* Interval Buttons */}
-        <div className="overflow-x-auto flex-shrink-0">
-          <ButtonGroup>
-            {minuteIntervals.map((interval) => (
-              <Button
-                key={interval}
-                variant="outline"
-                size="sm"
-                onClick={() => handleInterval(interval)}
-                className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedInterval === interval ? activeStyle : inactiveStyle
-                  }`}
-              >
-                {interval}
-              </Button>
-            ))}
-          </ButtonGroup>
-        </div>
+        <ButtonGroup>
+          {minuteIntervals.map((interval) => (
+            <Button
+              key={interval}
+              variant="outline"
+              size="sm"
+              onClick={() => handleInterval(interval)}
+              className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedInterval === interval ? activeStyle : inactiveStyle
+                }`}
+            >
+              {interval}
+            </Button>
+          ))}
+        </ButtonGroup>
 
         {/* Divider - hidden on mobile */}
         <div className="hidden md:block h-5 w-px bg-[#2a2a30]" />
 
-        {/* 24h Price Changes */}
-        <div className="flex items-center gap-1.5 md:gap-3 overflow-x-auto">
-          {/* Label */}
+        {/* 24h Price Changes - DESKTOP ONLY (inline with buttons) */}
+        <div className="hidden md:flex items-center gap-3 overflow-x-auto">
           <span className="text-gray-500 text-[10px] uppercase tracking-wider font-medium flex-shrink-0">
             24h
           </span>
@@ -152,33 +149,31 @@ export function ChartNavbar() {
             return (
               <div
                 key={change.symbol}
-                className="flex items-center gap-1 md:gap-1.5 bg-[#1a1a1f] px-1.5 md:px-2 py-1 rounded-md flex-shrink-0"
+                className="flex items-center gap-1.5 bg-[#1a1a1f] px-2 py-1 rounded-md flex-shrink-0"
               >
                 <img
                   src={config.logo}
                   alt={config.name}
-                  className="w-3.5 h-3.5 md:w-4 md:h-4"
+                  className="w-4 h-4"
                 />
-                <span className="hidden sm:inline text-gray-400 text-xs font-medium">
+                <span className="text-gray-400 text-xs font-medium">
                   {config.name}
                 </span>
-                <span className={`text-[10px] md:text-xs font-semibold ${color}`}>
+                <span className={`text-xs font-semibold ${color}`}>
                   {sign}{change.changePercent.toFixed(2)}%
                 </span>
               </div>
             );
           })}
         </div>
-      </div>
 
-      {/* Right side: Period Buttons */}
-      <div className="overflow-x-auto w-full md:w-auto flex-shrink-0">
+        {/* Period Buttons - on same line as interval buttons */}
         <ButtonGroup>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSelectedPeriod(null)}
-            className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
+            className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
               }`}
           >
             Auto
@@ -189,13 +184,42 @@ export function ChartNavbar() {
               variant="outline"
               size="sm"
               onClick={() => handlePeriod(period.label, period.seconds)}
-              className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
+              className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 md:px-2.5 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
                 }`}
             >
               {period.label}
             </Button>
           ))}
         </ButtonGroup>
+      </div>
+
+      {/* Row 2: 24h Price Changes - MOBILE ONLY (separate row) */}
+      <div className="flex md:hidden items-center gap-1.5 overflow-x-auto">
+        <span className="text-gray-500 text-[10px] uppercase tracking-wider font-medium flex-shrink-0">
+          24h
+        </span>
+        {priceChanges.map((change) => {
+          const isPositive = change.changePercent >= 0;
+          const color = isPositive ? "text-emerald-400" : "text-red-400";
+          const sign = isPositive ? "+" : "";
+          const config = assetConfig[change.symbol];
+
+          return (
+            <div
+              key={change.symbol}
+              className="flex items-center gap-1 bg-[#1a1a1f] px-1.5 py-0.5 rounded-md flex-shrink-0"
+            >
+              <img
+                src={config.logo}
+                alt={config.name}
+                className="w-3.5 h-3.5"
+              />
+              <span className={`text-[10px] font-semibold ${color}`}>
+                {sign}{change.changePercent.toFixed(2)}%
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

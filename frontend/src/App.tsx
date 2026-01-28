@@ -3,8 +3,12 @@ import { ChartNavbar } from "./components/ChartNavbar"
 import Navbar from "./components/Navbar"
 import OrderPanel from "./components/OrderPanel"
 import { OrderTable } from "./components/OrderTable"
+import { authClient } from "./lib/auth-client"
+import { useMediaQuery } from "./hooks/useMediaQuery"
 
 function App() {
+  const { data: session } = authClient.useSession()
+  const isDesktop = useMediaQuery("(min-width: 1280px)")
 
   return (
     <div className="min-h-screen xl:h-screen bg-[#0E0F14] flex flex-col overflow-y-auto xl:overflow-hidden">
@@ -26,16 +30,25 @@ function App() {
             <Chart />
           </div>
 
-          {/* order table - flex 1 part with small top gap */}
-          <div className="min-h-[150px] xl:min-h-0 xl:flex-[1.5] overflow-hidden mt-1">
-            <OrderTable />
-          </div>
+          {/* order table - DESKTOP ONLY (conditional render) */}
+          {isDesktop && (
+            <div className="xl:flex-[1.5] overflow-hidden mt-1">
+              <OrderTable />
+            </div>
+          )}
         </div>
 
         {/* right - trading panel */}
-        <div className="w-full xl:flex-1 xl:overflow-hidden min-h-0 pb-4 xl:pb-0">
+        <div className="w-full xl:flex-1 xl:overflow-hidden min-h-0">
           <OrderPanel />
         </div>
+
+        {/* order table - MOBILE ONLY (conditional render, only if logged in) */}
+        {!isDesktop && session?.user && (
+          <div className="min-h-[200px] overflow-hidden mt-2 pb-4">
+            <OrderTable />
+          </div>
+        )}
       </div>
     </div>
   )
