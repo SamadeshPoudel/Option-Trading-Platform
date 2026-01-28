@@ -119,6 +119,7 @@ async function listenToOrders() {
 
                         if (data.action === "CREATE_ORDER") {
                             const userId = data.userId;
+                            console.log("userId in engine createOrder:", userId);
                             if (!userBalance.has(userId)) userBalance.set(userId, 500 * DECIMAL_VALUE)
                             const balance = userBalance.get(data.userId) ?? 0
                             const exposure = (data.margin) * data.leverage //margin * leverage
@@ -198,9 +199,9 @@ async function listenToOrders() {
                         else if (data.action === "CHECK_BALANCE") {
                             const userId = data.userId;
                             const balance = userBalance.get(userId);
-                            //it is setting the userBalance to 500 when the fe fetches the balance; whenever new usr come to the platform
+                            //it is setting the userBalance to 5000 when the fe fetches the balance; whenever new usr come to the platform
                             if (!userBalance.has(userId)) {
-                                userBalance.set(userId, 5000000);
+                                userBalance.set(userId, 50000000);
                             }
 
                             const checkedBalance = {

@@ -8,7 +8,7 @@ import { FcGoogle } from "react-icons/fc";
 
 
 const Navbar = () => {
-  const openTrades = useTradeStore(state => state.openTrades);
+  const openTrades = useTradeStore(state => state.openTrades) || [];
   const livePrices = useAssetStore(state => state.livePrices);
   const [balance, setBalance] = useState(0)
   const [showUserModal, setShowUserModal] = useState(false);
@@ -18,6 +18,7 @@ const Navbar = () => {
     data: session,
   } = authClient.useSession()
 
+  // console.log("checking auth session data:", session);
   // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,23 +35,30 @@ const Navbar = () => {
   }, [showUserModal]);
 
 
-  const fetchBalance = async () => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/balance?userId=${session?.user?.id}`, {
+  const fetchBalance = async (userId?: string) => {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/balance?userId=${userId}`, {
       headers: {
         "Content-Type": "application/json"
       },
+      credentials: 'include',
     })
     const data = await res.json();
-    console.log(data.data)
-    console.log("typeOf:", typeof data.data)
+    console.log("checking userId in fetchBalance", session?.user?.id)
+    // console.log("typeOf:", typeof data.data)
     setBalance(Number(data.data) || 0);
   }
 
   useEffect(() => {
-    setInterval(() => {
-      fetchBalance();
-    }, 2000)
-  }, [])
+
+    if (!session?.user?.id) return;
+    fetchBalance(session?.user?.id);
+
+    const intervalId = setInterval(() => {
+      fetchBalance(session?.user?.id);
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [session?.user?.id])
 
 
   // Calculate unrealised PnL

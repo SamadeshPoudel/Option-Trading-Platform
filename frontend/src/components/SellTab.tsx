@@ -47,6 +47,7 @@ const SellTab = () => {
       headers: {
         "content-type": "application/json"
       },
+      credentials: 'include',
       body: JSON.stringify({
         userId: session?.user?.id,
         asset: selectedSymbol,
@@ -65,7 +66,7 @@ const SellTab = () => {
       toast.error("something went wrong, please try later")
     }
     const data = await res.json();
-    fetchOrders()
+    fetchOrders(session?.user?.id!)
     console.log("data from /trade/create", data);
   }
 

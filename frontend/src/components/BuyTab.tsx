@@ -46,6 +46,7 @@ const BuyTab = () => {
       headers: {
         "content-type": "application/json"
       },
+      credentials: 'include',
       body: JSON.stringify({
         userId: session?.user?.id,
         asset: selectedSymbol,
@@ -54,6 +55,8 @@ const BuyTab = () => {
         leverage: leverage
       })
     })
+    console.log("userId in buy button:", session?.user.id);
+
     const data = await res.json();
     if (res.status === 200) {
       toast.success("order placed successfully!")
@@ -64,7 +67,7 @@ const BuyTab = () => {
     } else {
       toast.error("something went wrong, please try later")
     }
-    fetchOrders()
+    fetchOrders(session?.user?.id!)
     console.log("data from /trade/create", data);
   }
 

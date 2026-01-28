@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createOrderSchema = z.object({
-    userId: z.uuid({ message: "Invalid user ID format" }),
+    userId: z.string().min(1, { message: "Invalid user ID format" }),
     asset: z.enum(["BTC", "ETH", "SOL"], {
         message: "Asset must be BTC, ETH, or SOL"
     }),
@@ -13,10 +13,10 @@ export const createOrderSchema = z.object({
 });
 
 export const closeOrderSchema = z.object({
-    userId: z.uuid({ message: "Invalid user ID format" }),
+    userId: z.string().min(1, { message: "Invalid user ID format" }),
     orderId: z.uuid({ message: "Invalid order ID format" })
 });
 
 export const userIdSchema = z.object({
-    userId: z.uuid({ message: "Invalid user ID format" })
+    userId: z.string().min(1, { message: "Invalid user ID format" })
 });

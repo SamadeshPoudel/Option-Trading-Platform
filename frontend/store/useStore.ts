@@ -1,5 +1,4 @@
 import { apiRequest } from '@/lib/api-client';
-import { authClient } from '@/lib/auth-client';
 import { create } from 'zustand'
 
 
@@ -35,7 +34,7 @@ type OrderState = {
   openTrades: Order[],
   closedTrades: any[],
   setOpenTrades: (trade: Order) => void;
-  fetchOrders: () => void;
+  fetchOrders: (userId: string) => void;
   removeTrade: (id: string) => void;
   clearTrade: () => void;
   loading: boolean;
@@ -73,22 +72,21 @@ export const useTradeStore = create<OrderState>((set) => ({
       openTrades: [...state.openTrades, trade]
     })),
 
-  fetchOrders: async () => {
-    const { data: session } = authClient.useSession();
+  fetchOrders: async (userId: string) => {
     set({
       loading: true
     })
     try {
-      const res = await apiRequest(`/api/open-orders?userId=${session?.user.id}`, "GET");
-      const closeTradeRes = await apiRequest(`/api/closed-orders?userId=${session?.user.id}`, "GET");
+      const res = await apiRequest(`/api/open-orders?userId=${userId}`, "GET");
+      const closeTradeRes = await apiRequest(`/api/closed-orders?userId=${userId}`, "GET");
 
-      const openOrders = res.data;
-      const closedOrders = closeTradeRes.closedOrder;
+      const openOrders = res.data || [];
+      const closedOrders = closeTradeRes.closedOrder || [];
 
       set({ openTrades: openOrders, closedTrades: closedOrders, loading: false })
     } catch (err) {
       console.error('Failed to fetch orders', err)
-      set({ loading: false })
+      set({ openTrades: [], closedTrades: [], loading: false });
     }
   },
   removeTrade: (id) =>

@@ -42,8 +42,9 @@ export function OrderTable() {
   const { data: session } = authClient.useSession();
 
   useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+    if (!session?.user?.id) return;
+    fetchOrders(session?.user.id!)
+  }, [fetchOrders, session?.user?.id])
 
   const handleClose = async ({ orderId }: { orderId: string }) => {
     const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/close`, {
@@ -51,6 +52,7 @@ export function OrderTable() {
       headers: {
         "Content-Type": "application/json"
       },
+      credentials: "include",
       body: JSON.stringify({
         userId: session?.user.id,
         orderId
@@ -64,7 +66,7 @@ export function OrderTable() {
       toast.error("something went wrong, please try later")
     }
     const data = await res.json();
-    fetchOrders();
+    fetchOrders(session?.user.id!);
     console.log("data after closing order", data)
   }
 
@@ -112,9 +114,9 @@ export function OrderTable() {
               openTrades.map((trade) => (
                 <div
                   key={trade.orderId}
-                  className="flex w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
+                  className="flex items-center w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
-                  {/* ...existing row content... */}
+
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 flex-shrink-0">
@@ -146,7 +148,10 @@ export function OrderTable() {
                   </div>
                   <div className={`${columnWidths.pnl} py-2 px-3`}>
                     {(() => {
-                      const currentPrice = livePrices[trade.asset as Asset]?.bid;
+                      // const currentPrice = livePrices[trade.asset as Asset]?.bid;
+                      const currentPrice = trade.type === "buy"
+                        ? livePrices[trade.asset as Asset]?.bid
+                        : livePrices[trade.asset as Asset]?.ask;
                       const openPrice = Number(trade.openPrice) / 10000;
 
                       if (!currentPrice || !trade.quantity) {
@@ -210,7 +215,7 @@ export function OrderTable() {
               closedTrades.map((trade) => (
                 <div
                   key={trade.orderId}
-                  className="flex w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
+                  className="flex items-center w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">

@@ -31,6 +31,7 @@ router.post("/trade/create", requireAuth, async (req: express.Request, res: expr
             return res.status(404).json({ msg: "Missing details to create the order!" })
         }
 
+        console.log("userId in /trade/create:", userId);
         console.log("reached inside create order route!")
 
         const createOrder: CreateOrder = {
