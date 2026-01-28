@@ -45,7 +45,7 @@ function App() {
 
         {/* order table - MOBILE ONLY (conditional render, only if logged in) */}
         {!isDesktop && session?.user && (
-          <div className="min-h-[200px] overflow-hidden mt-2 pb-4">
+          <div className="h-[250px] overflow-hidden mt-2 pb-4">
             <OrderTable />
           </div>
         )}
