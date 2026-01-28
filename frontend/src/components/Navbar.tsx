@@ -1,6 +1,5 @@
 import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
 import { Wallet, TrendingUp, TrendingDown, LogOut } from "lucide-react"
-import { SiDelta } from "react-icons/si";
 import { useEffect, useRef, useState } from "react";
 import { authClient, signIn, signOut } from "@/lib/auth-client";
 import { Button } from "./ui/button";
@@ -103,7 +102,12 @@ const Navbar = () => {
     <nav className="flex justify-between items-center bg-[#0a0a0d] text-white px-2 md:px-4 h-12 md:h-14 flex-shrink-0 border-b border-[#1a1a1f]">
       {/* Left: Logo */}
       <div className="flex items-center">
-        <SiDelta className="size-20 md:size-32" />
+        <div className="flex items-center gap-1 md:gap-2">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 md:w-6 md:h-6" fill="none" stroke="white" strokeWidth="2">
+            <path d="M12 3L22 21H2L12 3Z" />
+          </svg>
+          <span className="text-white font-bold text-xs md:text-lg tracking-[0.15em] md:tracking-[0.25em]">DELTA</span>
+        </div>
       </div>
 
       {/* Right: PnL, Balance, Profile */}

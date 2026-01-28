@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
-import { useChartStore, useAssetStore, type Asset } from "store/useStore"
+import { useChartStore, type Asset } from "store/useStore"
 import { useEffect, useState } from "react"
 import solanaLogo from "../assets/SolanaLogo.svg"
 import ethereumLogo from "../assets/EthereumLogo.svg"
@@ -114,8 +114,9 @@ export function ChartNavbar() {
 
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-1.5 md:gap-0">
-      {/* Row 1: Interval + Period buttons (same line on all screens) */}
-      <div className="flex items-center justify-between gap-2 md:gap-4">
+      {/* Mobile: Row 1 with Interval + Period together */}
+      {/* Desktop: Left side with Interval + 24h */}
+      <div className="flex items-center justify-between md:justify-start gap-2 md:gap-3">
         {/* Interval Buttons */}
         <ButtonGroup>
           {minuteIntervals.map((interval) => (
@@ -135,7 +136,7 @@ export function ChartNavbar() {
         {/* Divider - hidden on mobile */}
         <div className="hidden md:block h-5 w-px bg-[#2a2a30]" />
 
-        {/* 24h Price Changes - DESKTOP ONLY (inline with buttons) */}
+        {/* 24h Price Changes - DESKTOP ONLY (inline with interval buttons) */}
         <div className="hidden md:flex items-center gap-3 overflow-x-auto">
           <span className="text-gray-500 text-[10px] uppercase tracking-wider font-medium flex-shrink-0">
             24h
@@ -167,13 +168,42 @@ export function ChartNavbar() {
           })}
         </div>
 
-        {/* Period Buttons - on same line as interval buttons */}
+        {/* Period Buttons - MOBILE ONLY (same row as interval) */}
+        <div className="md:hidden">
+          <ButtonGroup>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedPeriod(null)}
+              className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
+                }`}
+            >
+              Auto
+            </Button>
+            {periodOptions.map((period) => (
+              <Button
+                key={period.label}
+                variant="outline"
+                size="sm"
+                onClick={() => handlePeriod(period.label, period.seconds)}
+                className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
+                  }`}
+              >
+                {period.label}
+              </Button>
+            ))}
+          </ButtonGroup>
+        </div>
+      </div>
+
+      {/* Period Buttons - DESKTOP ONLY (right side) */}
+      <div className="hidden md:block">
         <ButtonGroup>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSelectedPeriod(null)}
-            className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
+            className={`text-xs h-7 px-2.5 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
               }`}
           >
             Auto
@@ -184,7 +214,7 @@ export function ChartNavbar() {
               variant="outline"
               size="sm"
               onClick={() => handlePeriod(period.label, period.seconds)}
-              className={`text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 md:px-2.5 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
+              className={`text-xs h-7 px-2.5 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
                 }`}
             >
               {period.label}
