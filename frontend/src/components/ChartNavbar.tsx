@@ -24,7 +24,7 @@ export function ChartNavbar() {
   const selectedPeriod = useChartStore((state) => state.selectedPeriod);
   const setSelectedInterval = useChartStore((state) => state.setSelectedInterval);
   const setSelectedPeriod = useChartStore((state) => state.setSelectedPeriod);
-  
+
   const [priceChanges, setPriceChanges] = useState<PriceChange[]>([]);
 
   const minuteIntervals = ["1m", "3m", "5m", "30m"];
@@ -46,19 +46,19 @@ export function ChartNavbar() {
             `${import.meta.env.VITE_BACKEND_BASE_URL}/api/candles?symbol=${asset}_USDC&interval=1d&startTime=${Math.floor(Date.now() / 1000) - 86400 * 2}`
           );
           const data = await res.json();
-          
+
           if (data && data.length >= 2) {
             const yesterday = parseFloat(data[data.length - 2].close);
             const today = parseFloat(data[data.length - 1].close);
             const changePercent = ((today - yesterday) / yesterday) * 100;
-            
+
             changes.push({ symbol: asset, changePercent });
           } else if (data && data.length === 1) {
             // If only one candle, use open vs close
             const open = parseFloat(data[0].open);
             const close = parseFloat(data[0].close);
             const changePercent = ((close - open) / open) * 100;
-            
+
             changes.push({ symbol: asset, changePercent });
           }
         }
@@ -70,7 +70,7 @@ export function ChartNavbar() {
     };
 
     fetchPriceChanges();
-    
+
     // Refresh every 5 minutes
     const interval = setInterval(fetchPriceChanges, 2000); //5 * 60 * 1000
     return () => clearInterval(interval);
@@ -81,7 +81,7 @@ export function ChartNavbar() {
     if (!selectedPeriod) return null;
     const now = Math.floor(Date.now() / 1000);
     const diff = now - Number(selectedPeriod);
-    
+
     for (const p of periodOptions) {
       if (Math.abs(diff - p.seconds) < 60) return p.label;
     }
@@ -97,7 +97,7 @@ export function ChartNavbar() {
   const handlePeriod = (label: string, seconds: number) => {
     const now = Math.floor(Date.now() / 1000);
     const startTime = now - seconds;
-    
+
     if (activePeriodLabel === label) {
       setSelectedPeriod(null);
     } else {
@@ -109,37 +109,38 @@ export function ChartNavbar() {
   // const activeStyle = "bg-white text-black hover:bg-gray-200 hover:text-black";
   // const inactiveStyle = "bg-[#1a1a1f] text-gray-400 hover:bg-[#252529] hover:text-white border-[#2a2a30]";
 
-    const activeStyle = "bg-[#2a2a30] text-white hover:bg-[#353540] border-[#3a3a45]";
+  const activeStyle = "bg-[#2a2a30] text-white hover:bg-[#353540] border-[#3a3a45]";
   const inactiveStyle = "bg-[#1a1a1f] text-gray-400 hover:bg-[#252529] hover:text-white border-[#2a2a30]";
 
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
       {/* Left side: Interval + 24h Changes */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
         {/* Interval Buttons */}
-        <ButtonGroup>
-          {minuteIntervals.map((interval) => (
-            <Button
-              key={interval}
-              variant="outline"
-              size="sm"
-              onClick={() => handleInterval(interval)}
-              className={`text-xs h-7 px-2.5 border-0 cursor-pointer transition-all ${
-                selectedInterval === interval ? activeStyle : inactiveStyle
-              }`}
-            >
-              {interval}
-            </Button>
-          ))}
-        </ButtonGroup>
+        <div className="overflow-x-auto flex-shrink-0">
+          <ButtonGroup>
+            {minuteIntervals.map((interval) => (
+              <Button
+                key={interval}
+                variant="outline"
+                size="sm"
+                onClick={() => handleInterval(interval)}
+                className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedInterval === interval ? activeStyle : inactiveStyle
+                  }`}
+              >
+                {interval}
+              </Button>
+            ))}
+          </ButtonGroup>
+        </div>
 
-        {/* Divider */}
-        <div className="h-5 w-px bg-[#2a2a30]" />
+        {/* Divider - hidden on mobile */}
+        <div className="hidden md:block h-5 w-px bg-[#2a2a30]" />
 
         {/* 24h Price Changes */}
-        <div className="flex items-center gap-3">
-           {/* Label */}
-          <span className="text-gray-500 text-[10px] uppercase tracking-wider font-medium">
+        <div className="flex items-center gap-1.5 md:gap-3 overflow-x-auto">
+          {/* Label */}
+          <span className="text-gray-500 text-[10px] uppercase tracking-wider font-medium flex-shrink-0">
             24h
           </span>
           {priceChanges.map((change) => {
@@ -149,19 +150,19 @@ export function ChartNavbar() {
             const config = assetConfig[change.symbol];
 
             return (
-              <div 
-                key={change.symbol} 
-                className="flex items-center gap-1.5 bg-[#1a1a1f] px-2 py-1 rounded-md"
+              <div
+                key={change.symbol}
+                className="flex items-center gap-1 md:gap-1.5 bg-[#1a1a1f] px-1.5 md:px-2 py-1 rounded-md flex-shrink-0"
               >
-                <img 
-                  src={config.logo} 
-                  alt={config.name} 
-                  className="w-4 h-4"
+                <img
+                  src={config.logo}
+                  alt={config.name}
+                  className="w-3.5 h-3.5 md:w-4 md:h-4"
                 />
-                <span className="text-gray-400 text-xs font-medium">
+                <span className="hidden sm:inline text-gray-400 text-xs font-medium">
                   {config.name}
                 </span>
-                <span className={`text-xs font-semibold ${color}`}>
+                <span className={`text-[10px] md:text-xs font-semibold ${color}`}>
                   {sign}{change.changePercent.toFixed(2)}%
                 </span>
               </div>
@@ -171,31 +172,31 @@ export function ChartNavbar() {
       </div>
 
       {/* Right side: Period Buttons */}
-      <ButtonGroup>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSelectedPeriod(null)}
-          className={`text-xs h-7 px-2.5 border-0 cursor-pointer transition-all ${
-            selectedPeriod === null ? activeStyle : inactiveStyle
-          }`}
-        >
-          Auto
-        </Button>
-        {periodOptions.map((period) => (
+      <div className="overflow-x-auto w-full md:w-auto flex-shrink-0">
+        <ButtonGroup>
           <Button
-            key={period.label}
             variant="outline"
             size="sm"
-            onClick={() => handlePeriod(period.label, period.seconds)}
-            className={`text-xs h-7 px-2.5 border-0 cursor-pointer transition-all ${
-              activePeriodLabel === period.label ? activeStyle : inactiveStyle
-            }`}
+            onClick={() => setSelectedPeriod(null)}
+            className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${selectedPeriod === null ? activeStyle : inactiveStyle
+              }`}
           >
-            {period.label}
+            Auto
           </Button>
-        ))}
-      </ButtonGroup>
+          {periodOptions.map((period) => (
+            <Button
+              key={period.label}
+              variant="outline"
+              size="sm"
+              onClick={() => handlePeriod(period.label, period.seconds)}
+              className={`text-xs h-7 px-2 md:px-2.5 border-0 cursor-pointer transition-all ${activePeriodLabel === period.label ? activeStyle : inactiveStyle
+                }`}
+            >
+              {period.label}
+            </Button>
+          ))}
+        </ButtonGroup>
+      </div>
     </div>
   );
 }

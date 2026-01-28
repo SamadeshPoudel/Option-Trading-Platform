@@ -19,18 +19,17 @@ const assetLogos: Record<Asset, string> = {
   ETH: ethereumLogo,
 }
 
-// Define column widths for consistency
+// Define column widths for consistency - responsive
 const columnWidths = {
-  asset: "w-[12%]",
-  side: "w-[8%]",
-  qty: "w-[12%]",
-  leverage: "w-[10%]",
-  entry: "w-[12%]",
-  exit: "w-[12%]",
-  margin: "w-[12%]",
-  pnl: "w-[14%]",
-  action: "w-[10%]",
-  // closedAt: "w-[14%]",
+  asset: "w-[18%] md:w-[12%]",
+  side: "w-[15%] md:w-[8%]",
+  qty: "hidden md:table-cell md:w-[12%]",
+  leverage: "hidden md:table-cell md:w-[10%]",
+  entry: "hidden md:table-cell md:w-[12%]",
+  exit: "hidden md:table-cell md:w-[12%]",
+  margin: "w-[22%] md:w-[12%]",
+  pnl: "w-[25%] md:w-[14%]",
+  action: "w-[20%] md:w-[10%]",
 }
 
 export function OrderTable() {
@@ -95,26 +94,26 @@ export function OrderTable() {
         {/* Open Orders Tab */}
         <TabsContent value="open-order" className="flex-1 overflow-hidden m-0 flex flex-col min-h-0">
           {/* Table Header - Always Visible */}
-          <div className="flex-shrink-0 bg-[#1a1a1f] border-b border-[#2a2a30]">
-            <div className="flex w-full">
-              <div className={`${columnWidths.asset} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Asset</div>
-              <div className={`${columnWidths.side} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Side</div>
+          <div className="flex-shrink-0 bg-[#1a1a1f] border-b border-[#2a2a30] overflow-x-auto">
+            <div className="flex w-full min-w-[400px] md:min-w-0">
+              <div className={`${columnWidths.asset} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Asset</div>
+              <div className={`${columnWidths.side} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Side</div>
               <div className={`${columnWidths.qty} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Qty</div>
               <div className={`${columnWidths.leverage} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Leverage</div>
               <div className={`${columnWidths.entry} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Entry</div>
-              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Amount</div>
-              <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-3`}>PnL</div>
-              <div className={`${columnWidths.action} text-right text-gray-400 text-xs font-medium py-2 px-3 pr-5`}>Action</div>
+              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Amount</div>
+              <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>PnL</div>
+              <div className={`${columnWidths.action} text-right text-gray-400 text-xs font-medium py-2 px-2 md:px-3 pr-3 md:pr-5`}>Action</div>
             </div>
           </div>
 
           {/* Table Body - Scrollable with custom scrollbar */}
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 scrollbar-thin">
             {openTrades.length > 0 ? (
               openTrades.map((trade) => (
                 <div
                   key={trade.orderId}
-                  className="flex items-center w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
+                  className="flex items-center w-full min-w-[400px] md:min-w-0 border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
 
                   <div className={`${columnWidths.asset} py-2 px-3`}>
@@ -195,27 +194,26 @@ export function OrderTable() {
         {/* Closed Orders Tab */}
         <TabsContent value="closed-order" className="flex-1 overflow-hidden m-0 flex flex-col min-h-0">
           {/* Table Header - Always Visible */}
-          <div className="flex-shrink-0 bg-[#1a1a1f] border-b border-[#2a2a30]">
-            <div className="flex w-full">
-              <div className={`${columnWidths.asset} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Asset</div>
-              <div className={`${columnWidths.side} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Side</div>
+          <div className="flex-shrink-0 bg-[#1a1a1f] border-b border-[#2a2a30] overflow-x-auto">
+            <div className="flex w-full min-w-[400px] md:min-w-0">
+              <div className={`${columnWidths.asset} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Asset</div>
+              <div className={`${columnWidths.side} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Side</div>
               <div className={`${columnWidths.qty} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Qty</div>
               <div className={`${columnWidths.leverage} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Leverage</div>
               <div className={`${columnWidths.entry} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Entry</div>
               <div className={`${columnWidths.exit} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Exit</div>
-              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-3`}>Amount</div>
-              <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-3`}>PnL</div>
-              {/* <div className={`${columnWidths.closedAt} text-right text-gray-400 text-xs font-medium py-2 px-3 pr-5`}>Closed At</div> */}
+              <div className={`${columnWidths.margin} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>Amount</div>
+              <div className={`${columnWidths.pnl} text-left text-gray-400 text-xs font-medium py-2 px-2 md:px-3`}>PnL</div>
             </div>
           </div>
 
           {/* Table Body - Scrollable with custom scrollbar */}
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 scrollbar-thin">
             {closedTrades.length > 0 ? (
               closedTrades.map((trade) => (
                 <div
                   key={trade.orderId}
-                  className="flex items-center w-full border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
+                  className="flex items-center w-full min-w-[400px] md:min-w-0 border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">
