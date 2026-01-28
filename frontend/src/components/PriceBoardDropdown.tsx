@@ -29,6 +29,8 @@ const PriceBoardDropdown = () => {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number>(0)
 
+  const subscribedAsset = useAssetStore(state => state.subscribedAsset)
+
   // tracking previous bid to detect direction and show color of the price red green or whatever I want
   const prevBidRef = useRef<number | null>(null)
   const timeoutRef = useRef<number | null>(null)
@@ -41,10 +43,10 @@ const PriceBoardDropdown = () => {
         setTriggerWidth(triggerRef.current.offsetWidth)
       }
     }
-    
+
     updateWidth()
     window.addEventListener("resize", updateWidth)
-    
+
     return () => window.removeEventListener("resize", updateWidth)
   }, [])
 
@@ -82,10 +84,21 @@ const PriceBoardDropdown = () => {
     const ws = new WebSocket(import.meta.env.VITE_WS_BASE_URL)
 
     ws.onopen = () => {
+      // Subscribe to the currently selected symbol
       ws.send(JSON.stringify({
         "action": "SUBSCRIBE",
         "asset": selectedSymbol
       }))
+
+      // Subscribe to all assets from open orders
+      subscribedAsset.forEach(asset => {
+        if (asset !== selectedSymbol) { // Avoid duplicate subscription
+          ws.send(JSON.stringify({
+            "action": "SUBSCRIBE",
+            "asset": asset
+          }))
+        }
+      })
     }
 
     ws.onmessage = (event) => {
@@ -111,7 +124,7 @@ const PriceBoardDropdown = () => {
         ws.close()
       }
     }
-  }, [selectedSymbol, updatePrice])
+  }, [subscribedAsset, updatePrice, selectedSymbol])
 
   function handleClick(asset: Asset) {
     setSelectedSymbol(asset)
@@ -121,14 +134,14 @@ const PriceBoardDropdown = () => {
 
   const priceClass =
     direction === "up" ? "text-emerald-400" :
-    direction === "down" ? "text-red-400" :
-    "text-white"
+      direction === "down" ? "text-red-400" :
+        "text-white"
 
   const currentAsset = assetConfig[selectedSymbol]
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}> 
-      <DropdownMenuTrigger 
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger
         ref={triggerRef}
         className="w-full bg-[#1a1a1f] hover:bg-[#252529] p-3 my-1 rounded-lg cursor-pointer transition-all duration-200 outline-none"
       >
@@ -136,10 +149,10 @@ const PriceBoardDropdown = () => {
           {/* Left: Logo + Symbol */}
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-              <img 
-                src={currentAsset.logo} 
-                alt={`${selectedSymbol}-logo`} 
-                className="w-full h-full object-contain" 
+              <img
+                src={currentAsset.logo}
+                alt={`${selectedSymbol}-logo`}
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="flex flex-col items-start">
@@ -152,14 +165,14 @@ const PriceBoardDropdown = () => {
             <span className={`font-bold text-x transition-colors duration-300 ${priceClass}`}>
               {price ? `$${price.bid.toFixed(2)}` : "-"}
             </span>
-            <ChevronDown 
-              className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} 
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
             />
           </div>
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent 
+      <DropdownMenuContent
         className="bg-[#1a1a1f] border border-[#2a2a30] rounded-lg p-1"
         style={{ width: triggerWidth > 0 ? `${triggerWidth}px` : 'auto' }}
         align="start"
@@ -168,28 +181,28 @@ const PriceBoardDropdown = () => {
           Select Asset
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#2a2a30]" />
-        
+
         {(Object.keys(assetConfig) as Asset[]).map((asset) => {
           const config = assetConfig[asset]
           const isSelected = selectedSymbol === asset
-          
+
           return (
             <DropdownMenuItem
               key={asset}
               onClick={() => handleClick(asset)}
               className={`
                 flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors duration-150
-                ${isSelected 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
+                ${isSelected
+                  ? 'bg-emerald-500/10 text-emerald-400'
                   : 'text-white hover:bg-[#252529]'
                 }
               `}
             >
               <div className={`w-5 h-5 rounded-full flex items-center justify-center p-1 flex-shrink-0 ${isSelected ? 'bg-emerald-500/20' : 'bg-[#2a2a30]'}`}>
-                <img 
-                  src={config.logo} 
-                  alt={`${asset}-logo`} 
-                  className="w-full h-full object-contain" 
+                <img
+                  src={config.logo}
+                  alt={`${asset}-logo`}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex flex-col flex-1 min-w-0">

@@ -8,6 +8,7 @@ import { FcGoogle } from "react-icons/fc";
 
 const Navbar = () => {
   const openTrades = useTradeStore(state => state.openTrades) || [];
+  const clearTrade = useTradeStore(state => state.clearTrade);
   const livePrices = useAssetStore(state => state.livePrices);
   const [balance, setBalance] = useState(0)
   const [showUserModal, setShowUserModal] = useState(false);
@@ -15,6 +16,7 @@ const Navbar = () => {
 
   const {
     data: session,
+    isPending
   } = authClient.useSession()
 
   // console.log("checking auth session data:", session);
@@ -48,8 +50,17 @@ const Navbar = () => {
   }
 
   useEffect(() => {
+    // Wait for session to be resolved
+    if (isPending) return;
 
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      // User signed out - clear balance and trades
+      setBalance(0);
+      clearTrade();
+      return;
+    }
+
+    // User signed in - fetch balance
     fetchBalance(session?.user?.id);
 
     const intervalId = setInterval(() => {
@@ -57,7 +68,7 @@ const Navbar = () => {
     }, 2000);
 
     return () => clearInterval(intervalId);
-  }, [session?.user?.id])
+  }, [session, isPending])
 
 
   // Calculate unrealised PnL

@@ -5,7 +5,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import solanaLogo from "../assets/SolanaLogo.svg"
 import ethereumLogo from "../assets/EthereumLogo.svg"
 import bitcoinLogo from "../assets/bitcoinLogo.svg"
@@ -36,14 +36,48 @@ export function OrderTable() {
   const openTrades = useTradeStore(state => state.openTrades)
   const closedTrades = useTradeStore(state => state.closedTrades);
   const fetchOrders = useTradeStore(state => state.fetchOrders);
+  const clearTrade = useTradeStore(state => state.clearTrade);
   const livePrices = useAssetStore(state => state.livePrices);
+  const setSubscribedAsset = useAssetStore(state => state.setSubscribedAsset);
 
   const { data: session } = authClient.useSession();
 
+  // Track if user was previously logged in to detect sign out
+  const prevUserIdRef = useRef<string | null>(null);
+
+  // Fetch orders on mount and when session changes
   useEffect(() => {
-    if (!session?.user?.id) return;
-    fetchOrders(session?.user.id!)
-  }, [fetchOrders, session?.user?.id])
+    const checkSessionAndFetch = async () => {
+      try {
+        const sessionData = await authClient.getSession();
+        const userId = sessionData?.data?.user?.id;
+
+        if (userId) {
+          // User is logged in - fetch orders
+          fetchOrders(userId);
+          prevUserIdRef.current = userId;
+        } else if (prevUserIdRef.current) {
+          // User was logged in but now isn't - they signed out
+          clearTrade();
+          setSubscribedAsset([]);
+          prevUserIdRef.current = null;
+        }
+      } catch (err) {
+        console.error("Failed to fetch session:", err);
+      }
+    };
+
+    checkSessionAndFetch();
+  }, [fetchOrders, clearTrade, setSubscribedAsset, session]);
+
+  // Update subscribed assets whenever openTrades changes
+  useEffect(() => {
+    if (openTrades.length > 0) {
+      const assets = openTrades.map(t => t.asset)
+      const uniqueAssets = [...new Set(assets)]
+      setSubscribedAsset(uniqueAssets)
+    }
+  }, [openTrades, setSubscribedAsset])
 
   const handleClose = async ({ orderId }: { orderId: string }) => {
     const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/close`, {
@@ -115,7 +149,6 @@ export function OrderTable() {
                   key={trade.orderId}
                   className="flex items-center w-full min-w-[400px] md:min-w-0 border-b border-[#2a2a30] hover:bg-[#1a1a1f] transition-colors"
                 >
-
                   <div className={`${columnWidths.asset} py-2 px-3`}>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 flex-shrink-0">
