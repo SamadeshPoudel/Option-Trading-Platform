@@ -1,32 +1,23 @@
-# DB Worker Service Dockerfile
-FROM oven/bun:1 AS base
+#Download the base image from the docker hub
+FROM oven/bun:latest
+
+#work inside the app dir in the container
 WORKDIR /app
 
-# Install dependencies
-FROM base AS deps
+#copy the package files
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
 
-# Build stage - generate Prisma client
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+#install the dependecies
+RUN bun install --production
 
-# Generate Prisma client
+#copy prisma schema for generation
+COPY prisma ./prisma/
+
+#Generate prisma client
 RUN bunx prisma generate
 
-# Production stage
-FROM base AS runner
-WORKDIR /app
+#copy rest of the application
+COPY . .
 
-ENV NODE_ENV=production
-
-# Copy necessary files
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/*.ts ./
-COPY --from=builder /app/tsconfig.json ./
-
-# Run the application
-CMD ["bun", "run", "index.ts"]
+#start the application
+CMD [ "bun","run","index.ts" ]
