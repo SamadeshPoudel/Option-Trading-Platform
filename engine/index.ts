@@ -1,6 +1,10 @@
 import { createClient } from "redis";
 import type { Trade } from "./types";
-const redisClient = createClient();
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
+const redisClient = createClient({
+    url: redisUrl
+});
 
 const client = redisClient.duplicate();
 await client.connect();

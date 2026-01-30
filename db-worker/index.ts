@@ -1,6 +1,10 @@
 import { PrismaClient } from "./generated/prisma/client";
 import { createClient } from "redis";
-const client = createClient();
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
+const client = createClient({
+    url: redisUrl
+});
 const prisma = new PrismaClient();
 await client.connect();
 
