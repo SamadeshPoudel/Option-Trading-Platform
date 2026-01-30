@@ -175,3 +175,17 @@
 .scrollbar-thin {
   scrollbar-width: thin;
 }
+
+/* Shimmer animation for loading buttons */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}

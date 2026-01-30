@@ -28,6 +28,7 @@ const BuyTab = () => {
   const [amount, setAmount] = useState(livePrice?.bid || 100);
   const [leverage, setLeverage] = useState(1);
   const [isAmountFocused, setIsAmountFocused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: session } = authClient.useSession()
 
@@ -41,34 +42,40 @@ const BuyTab = () => {
   }, [amount, leverage, livePrice?.bid]);
 
   const handleClick = async () => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/create`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        userId: session?.user?.id,
-        asset: selectedSymbol,
-        type: "buy",
-        margin: amount,
-        leverage: leverage
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/trade/create`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: session?.user?.id,
+          asset: selectedSymbol,
+          type: "buy",
+          margin: amount,
+          leverage: leverage
+        })
       })
-    })
-    console.log("userId in buy button:", session?.user.id);
+      console.log("userId in buy button:", session?.user.id);
 
-    const data = await res.json();
-    if (res.status === 200) {
-      toast.success("order placed successfully!")
-    } else if (res.status === 400) {
-      toast.error("Insufficient balance!")
-    } else if (res.status === 401) {
-      toast.warning("sign in to place an order")
-    } else {
-      toast.error("something went wrong, please try later")
+      const data = await res.json();
+      if (res.status === 200) {
+        toast.success("order placed successfully!")
+      } else if (res.status === 400) {
+        toast.error("Insufficient balance!")
+      } else if (res.status === 401) {
+        toast.warning("sign in to place an order")
+      } else {
+        toast.error("something went wrong, please try later")
+      }
+      fetchOrders(session?.user?.id!)
+      console.log("data from /trade/create", data);
+    } finally {
+      setIsLoading(false);
     }
-    fetchOrders(session?.user?.id!)
-    console.log("data from /trade/create", data);
   }
 
   return (
@@ -169,11 +176,27 @@ const BuyTab = () => {
       <div className="pt-1">
         <Button
           variant="outline"
-          className="text-black bg-green-600 w-full hover:bg-green-500 hover:text-white border-none cursor-pointer h-9 text-sm font-sm transition-all duration-200"
-          disabled={!livePrice?.bid}
+          className={`
+            relative overflow-hidden text-black bg-green-600 w-full hover:bg-green-500 
+            hover:text-black border-none cursor-pointer h-9 text-sm font-sm transition-all duration-200
+            ${isLoading ? 'pointer-events-none' : ''}
+          `}
+          disabled={!livePrice?.bid || isLoading}
           onClick={handleClick}
         >
-          Buy {quantity.toFixed(2)} {selectedSymbol} @ ${livePrice?.bid?.toFixed(2)}
+          {/* Animated gradient sweep loader */}
+          {isLoading && (
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-green-400/40 to-transparent animate-shimmer"
+              style={{
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.2s ease-in-out infinite',
+              }}
+            />
+          )}
+          <span className={`relative z-10 ${isLoading ? 'opacity-70' : ''}`}>
+            {isLoading ? 'Placing Order...' : `Buy ${quantity.toFixed(2)} ${selectedSymbol} @ $${livePrice?.bid?.toFixed(2)}`}
+          </span>
         </Button>
       </div>
 

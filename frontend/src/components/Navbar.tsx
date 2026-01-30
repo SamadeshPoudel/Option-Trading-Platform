@@ -1,5 +1,5 @@
 import { useAssetStore, useTradeStore, type Asset } from "store/useStore"
-import { Wallet, TrendingUp, TrendingDown, LogOut } from "lucide-react"
+import { Wallet, TrendingUp, TrendingDown, LogOut, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react";
 import { authClient, signIn, signOut } from "@/lib/auth-client";
 import { Button } from "./ui/button";
@@ -12,6 +12,8 @@ const Navbar = () => {
   const livePrices = useAssetStore(state => state.livePrices);
   const [balance, setBalance] = useState(0)
   const [showUserModal, setShowUserModal] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -105,14 +107,33 @@ const Navbar = () => {
   const pnlColor = isPositive ? "text-emerald-400" : "text-red-400";
 
   const handleLogout = async () => {
-    await signOut();
-    setShowUserModal(false);
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      setShowUserModal(false);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signIn.social({
+        provider: "google",
+        callbackURL: import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"
+      });
+    } catch (error) {
+      console.error("Sign in failed:", error);
+      setIsSigningIn(false);
+    }
+    // Note: Don't set isSigningIn to false on success since we're redirecting
   };
 
   return (
     <nav className="flex justify-between items-center bg-[#0a0a0d] text-white px-2 md:px-4 h-12 md:h-14 flex-shrink-0 border-b border-[#1a1a1f]">
       {/* Left: Logo */}
-      <div className="flex items-center">
+      <div className="flex items-center cursor-default">
         <div className="flex items-center gap-1 md:gap-2">
           <svg viewBox="0 0 24 24" className="w-4 h-4 md:w-6 md:h-6" fill="none" stroke="white" strokeWidth="2">
             <path d="M12 3L22 21H2L12 3Z" />
@@ -125,7 +146,7 @@ const Navbar = () => {
       <div className="flex items-center gap-1.5 md:gap-3">
 
         {/* Unrealised PnL */}
-        <div className={`flex items-center gap-1 md:gap-2 px-1.5 md:px-3 py-1 md:py-1.5 rounded-lg`}>
+        <div className={`flex items-center gap-1 md:gap-2 px-1.5 md:px-3 py-1 md:py-1.5 rounded-lg cursor-default`}>
           <span className="hidden md:inline text-[10px] text-gray-400 uppercase tracking-wider font-medium">
             Unrealised
           </span>
@@ -149,7 +170,7 @@ const Navbar = () => {
         <div className="h-5 md:h-6 w-px bg-[#2a2a30]" />
 
         {/* Balance */}
-        <div className="flex items-center gap-1.5 md:gap-2 px-1.5 md:px-3 py-1 md:py-1.5">
+        <div className="flex items-center gap-1.5 md:gap-2 px-1.5 md:px-3 py-1 md:py-1.5 cursor-default">
           <Wallet className="w-3 h-3 md:w-3.5 md:h-3.5 text-gray-400" />
           <div className="flex flex-col">
             <span className="hidden md:block text-[10px] text-gray-500 tracking-wider leading-none">
@@ -204,10 +225,24 @@ const Navbar = () => {
                 <div className="p-1.5 md:p-2">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                    disabled={isSigningOut}
+                    className={`
+                      w-full flex items-center justify-center gap-2 px-2 md:px-3 py-1.5 md:py-2 
+                      text-xs md:text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-all
+                      ${isSigningOut ? 'opacity-70 cursor-not-allowed' : ''}
+                    `}
                   >
-                    <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                    Log out
+                    {isSigningOut ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                        Signing out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        Log out
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -216,15 +251,28 @@ const Navbar = () => {
         ) : (
           <Button
             variant="outline"
-            className="cursor-pointer bg-[#1a1a1f] border-[#2a2a30] text-gray-200 hover:bg-[#252530] hover:border-[#3a3a45] hover:text-white transition-all duration-200 gap-1.5 md:gap-2 text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
-            onClick={() => signIn.social({
-              provider: "google",
-              callbackURL: import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"
-            })}
+            className={`
+              cursor-pointer bg-[#1a1a1f] border-[#2a2a30] text-gray-200 
+              hover:bg-[#252530] hover:border-[#3a3a45] hover:text-white 
+              transition-all duration-200 gap-1.5 md:gap-2 text-xs md:text-sm px-2 md:px-4 h-8 md:h-9
+              ${isSigningIn ? 'pointer-events-none opacity-80' : ''}
+            `}
+            disabled={isSigningIn}
+            onClick={handleSignIn}
           >
-            <FcGoogle className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            <span className="hidden sm:inline">Sign in</span>
-            <span className="sm:hidden">Login</span>
+            {isSigningIn ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin text-violet-400" />
+                <span className="hidden sm:inline">Signing in...</span>
+                <span className="sm:hidden">...</span>
+              </>
+            ) : (
+              <>
+                <FcGoogle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Sign in</span>
+                <span className="sm:hidden">Login</span>
+              </>
+            )}
           </Button>
         )}
       </div>
