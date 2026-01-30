@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files (use docker-compose env vars instead)
+.env
+.env.*
+
+# Build artifacts
+dist
+build
+
+# Prisma generated (will be regenerated in Docker)
+generated
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__
+coverage
+
+# Docs
+README.md
