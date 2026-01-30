@@ -12,7 +12,7 @@ const { data, error } = await authClient.signIn.email({
     /**
      * A URL to redirect to after the user verifies their email (optional)
      */
-    callbackURL: "/",
+    callbackURL: import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173",
     /**
      * remember the user session after the browser is closed. 
      * @default true
