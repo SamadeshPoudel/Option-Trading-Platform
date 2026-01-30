@@ -219,7 +219,7 @@ const Navbar = () => {
             className="cursor-pointer bg-[#1a1a1f] border-[#2a2a30] text-gray-200 hover:bg-[#252530] hover:border-[#3a3a45] hover:text-white transition-all duration-200 gap-1.5 md:gap-2 text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
             onClick={() => signIn.social({
               provider: "google",
-              callbackURL: "http://localhost:5173"
+              callbackURL: "/"
             })}
           >
             <FcGoogle className="w-3.5 h-3.5 md:w-4 md:h-4" />

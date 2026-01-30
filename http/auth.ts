@@ -4,9 +4,13 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 const prisma = new PrismaClient();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
-  baseURL: "http://localhost:5000",
-  trustedOrigins: ["http://localhost:5173"],
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
+  trustedOrigins: isProduction
+    ? ["https://delta.samadesh.com"]
+    : ["http://localhost:5173"],
   emailAndPassword: {
     enabled: false,
   },

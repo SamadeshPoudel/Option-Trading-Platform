@@ -51,6 +51,8 @@ services:
   poller:
     image: samadesh/delta-poller:latest
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     environment:
       NODE_ENV: production
       REDIS_URL: redis://redis:6379

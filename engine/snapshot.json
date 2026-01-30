@@ -1,1 +1,4 @@
-{"openOrders":[["k6AO4CUpeaKS6dcuQy4UX5EFONziR30l",[]],["X2h3JACyMzk1mokbsMXzlYeXZoi4oGxD",[{"userId":"X2h3JACyMzk1mokbsMXzlYeXZoi4oGxD","orderId":"b77b85e4-f10f-4359-9879-cff30b3acb22","asset":"BTC","openPrice":896234338,"type":"buy","quantity":0.1115779609863598,"margin":10000000,"leverage":10,"status":"open","reqStatus":"success"},{"userId":"X2h3JACyMzk1mokbsMXzlYeXZoi4oGxD","orderId":"ff3fb4a8-36d4-4f79-b228-4dd297f057c7","asset":"ETH","openPrice":30259529,"type":"buy","quantity":3.3047441022627946,"margin":10000000,"leverage":10,"status":"open","reqStatus":"success"}]]],"userBalance":[["k6AO4CUpeaKS6dcuQy4UX5EFONziR30l",70256019.64250155],["X2h3JACyMzk1mokbsMXzlYeXZoi4oGxD",30000000]]}
+{
+    "openOrders": [],
+    "userBalance": []
+}
