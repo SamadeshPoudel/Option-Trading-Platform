@@ -67,7 +67,7 @@ const Navbar = () => {
 
     const intervalId = setInterval(() => {
       fetchBalance(session?.user?.id);
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, [session, isPending])
