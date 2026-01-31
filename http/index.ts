@@ -3,6 +3,7 @@ import tradeRoutes from "./tradeRoutes"
 import cors from "cors";
 import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import { auth } from "./auth";
+import rateLimit from "express-rate-limit"
 
 const app = express();
 
@@ -12,6 +13,11 @@ if (process.env.NODE_ENV !== "production") {
         credentials: true,
     }))
 }
+
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limiting each IP to 100 requests per 15
+}))
 // app.use(cors({
 //     origin: "http://localhost:5173",
 //     credentials: true,
