@@ -77,7 +77,7 @@ function connectToBackpack() {
     })
 
     ws.on('close', () => {
-        console.log("Backpack ws closed, reconnecting in 3 seconfs");
+        // console.log("Backpack ws closed, reconnecting in 3 seconfs");
         setTimeout(() => {
             connectToBackpack();
         }, 3000)
@@ -97,9 +97,9 @@ wss.on('connection', function connection(ws) {
     ws.on('error', console.error);
 
     ws.on('message', function message(data) {
-        console.log('received: %s', data);
+        // console.log('received: %s', data);
         const parsedData = JSON.parse(data.toString())
-        console.log("parsedDATA:", parsedData)
+        // console.log("parsedDATA:", parsedData)
 
         if (parsedData.action === "SUBSCRIBE") {
             // Prevent duplicate subscriptions
@@ -129,7 +129,7 @@ wss.on('connection', function connection(ws) {
             subscriptionTable.set(asset, filtered || [])
         })
         subscribedAssets = []
-        console.log("Client disconnected, cleaned up subscriptions")
+        // console.log("Client disconnected, cleaned up subscriptions")
     })
 
     //   ws.send('something');

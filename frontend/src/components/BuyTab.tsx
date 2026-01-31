@@ -59,7 +59,7 @@ const BuyTab = () => {
           leverage: leverage
         })
       })
-      console.log("userId in buy button:", session?.user.id);
+      // console.log("userId in buy button:", session?.user.id);
 
       const data = await res.json();
       if (res.status === 200) {
@@ -72,7 +72,7 @@ const BuyTab = () => {
         toast.error("something went wrong, please try later")
       }
       fetchOrders(session?.user?.id!)
-      console.log("data from /trade/create", data);
+      // console.log("data from /trade/create", data);
     } finally {
       setIsLoading(false);
     }

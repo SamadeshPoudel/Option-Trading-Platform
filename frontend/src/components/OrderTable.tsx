@@ -100,7 +100,7 @@ export function OrderTable() {
     }
     const data = await res.json();
     fetchOrders(session?.user.id!);
-    console.log("data after closing order", data)
+    // console.log("data after closing order", data)
   }
 
   return (

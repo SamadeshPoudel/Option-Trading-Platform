@@ -123,7 +123,7 @@ async function listenToOrders() {
 
                         if (data.action === "CREATE_ORDER") {
                             const userId = data.userId;
-                            console.log("userId in engine createOrder:", userId);
+                            // console.log("userId in engine createOrder:", userId);
                             if (!userBalance.has(userId)) userBalance.set(userId, 500 * DECIMAL_VALUE)
                             const balance = userBalance.get(data.userId) ?? 0
                             const exposure = (data.margin) * data.leverage //margin * leverage
@@ -132,7 +132,7 @@ async function listenToOrders() {
                                 ? latestPrice.get(data.asset)?.bid!
                                 : latestPrice.get(data.asset)?.ask!
 
-                            console.log("checking data.type", data.type);
+                            // console.log("checking data.type", data.type);
 
                             if (balance >= data.margin) {
                                 const createdOrder: Trade = {
@@ -177,7 +177,7 @@ async function listenToOrders() {
                                 }
                                 await publisher.publish(`${data.orderId}`, JSON.stringify(createdOrder))
                                 console.log("insufficient balance:", userBalance.get(data.userId))
-                                console.log("order processed from engine (else condition):", createdOrder)
+                                // console.log("order processed from engine (else condition):", createdOrder)
                             }
                         }
 

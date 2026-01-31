@@ -46,7 +46,7 @@ const Navbar = () => {
       credentials: 'include',
     })
     const data = await res.json();
-    console.log("checking userId in fetchBalance", session?.user?.id)
+    // console.log("checking userId in fetchBalance", session?.user?.id)
     // console.log("typeOf:", typeof data.data)
     setBalance(Number(data.data) || 0);
   }

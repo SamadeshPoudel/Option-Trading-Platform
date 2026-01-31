@@ -71,7 +71,7 @@ const SellTab = () => {
       }
       const data = await res.json();
       fetchOrders(session?.user?.id!)
-      console.log("data from /trade/create", data);
+      // console.log("data from /trade/create", data);
     } finally {
       setIsLoading(false);
     }

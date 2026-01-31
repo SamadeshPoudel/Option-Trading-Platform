@@ -35,8 +35,8 @@ router.post("/trade/create", requireAuth, async (req: express.Request, res: expr
             return res.status(404).json({ msg: "Missing details to create the order!" })
         }
 
-        console.log("userId in /trade/create:", userId);
-        console.log("reached inside create order route!")
+        // console.log("userId in /trade/create:", userId);
+        // console.log("reached inside create order route!")
 
         const createOrder: CreateOrder = {
             action: "CREATE_ORDER",
@@ -184,7 +184,7 @@ router.get("/balance", requireAuth, async (req: express.Request, res: express.Re
 
         const result: any = await responsePromise;
         const parsedResult = JSON.parse(result);
-        console.log("checking parseResult", parsedResult);
+        // console.log("checking parseResult", parsedResult);
         if (parsedResult.reqStatus === 'success') {
             return res.status(200).json({ data: parsedResult.balance, msg: "Balance fetched successfully!" })
         }
