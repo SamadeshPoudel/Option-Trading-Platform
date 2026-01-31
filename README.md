@@ -1,12 +1,11 @@
 # Delta - An Option Trading Platform
 
-**Live Demo:** [delta.samadesh.com](https://delta.samadesh.com)
-
 **Delta** is a high-performance, microservices-based option trading platform designed for speed, scalability, and reliability. It features a real-time matching engine, live market data streaming, and a responsive React frontend.
+
+## System Architecture
 
 ![System Architecture](./assets/DeltaArchitecture.png)
 
-## System Architecture
 
 Delta uses an event-driven microservices architecture to handle high-frequency trading operations efficiently.
 
@@ -104,3 +103,5 @@ Delta uses an event-driven microservices architecture to handle high-frequency t
 - **DevOps**: Docker, Docker Compose, Nginx
 
 ---
+
+**Live link:** [delta.samadesh.com](https://delta.samadesh.com)
