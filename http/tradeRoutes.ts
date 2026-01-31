@@ -5,6 +5,7 @@ import { PrismaClient } from "./generated/prisma/client";
 import { closeOrderSchema, createOrderSchema, userIdSchema } from "./zodValidation";
 import { z } from "zod";
 import { requireAuth } from "./authMiddleware";
+import { rateLimiter } from "./rateLimiter";
 
 
 const prisma = new PrismaClient();
@@ -24,7 +25,7 @@ await subcribe.connect();
 
 const DECIMAL_VALUE = 10000;
 
-router.post("/trade/create", requireAuth, async (req: express.Request, res: express.Response) => {
+router.post("/trade/create", rateLimiter, requireAuth, async (req: express.Request, res: express.Response) => {
 
     try {
         const validatedData = createOrderSchema.parse(req.body);
@@ -93,7 +94,7 @@ router.post("/trade/create", requireAuth, async (req: express.Request, res: expr
     }
 })
 
-router.post("/trade/close", requireAuth, async (req: express.Request, res: express.Response) => {
+router.post("/trade/close", rateLimiter, requireAuth, async (req: express.Request, res: express.Response) => {
     try {
         const validatedData = closeOrderSchema.parse(req.body)
         const { userId, orderId } = validatedData;
