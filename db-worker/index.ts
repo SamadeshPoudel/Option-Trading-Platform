@@ -61,6 +61,7 @@ while (true) {
                     saveToDB(data)
 
                     await client.xAck(STREAM_NAME, CONSUMER_GROUP, message.id)
+                    await client.xDel(STREAM_NAME, message.id)
                 }
             }
         }

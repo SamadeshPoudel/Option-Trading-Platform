@@ -68,6 +68,13 @@ router.post("/trade/create", rateLimiter, requireAuth, async (req: express.Reque
             "*",
             {
                 data: JSON.stringify(createOrder)
+            },
+            {
+                TRIM: {
+                    strategy: "MAXLEN",
+                    strategyModifier: "~",
+                    threshold: 100_000
+                }
             }
         )
 
@@ -126,6 +133,13 @@ router.post("/trade/close", rateLimiter, requireAuth, async (req: express.Reques
             "*",
             {
                 data: JSON.stringify(closeOrder)
+            },
+            {
+                TRIM: {
+                    strategy: "MAXLEN",
+                    strategyModifier: "~",
+                    threshold: 100_000
+                }
             }
         )
 
@@ -180,6 +194,13 @@ router.get("/balance", requireAuth, async (req: express.Request, res: express.Re
             "*",
             {
                 data: JSON.stringify(payload)
+            },
+            {
+                TRIM: {
+                    strategy: "MAXLEN",
+                    strategyModifier: "~",
+                    threshold: 100_000
+                }
             }
         )
 
@@ -229,7 +250,14 @@ router.get("/open-orders", requireAuth, async (req: express.Request, res: expres
         await client.XADD(
             "trade",
             "*",
-            { data: JSON.stringify(payload) }
+            { data: JSON.stringify(payload) },
+            {
+                TRIM: {
+                    strategy: "MAXLEN",
+                    strategyModifier: "~",
+                    threshold: 100_000
+                }
+            }
         )
 
         const result: any = await responsePromise;

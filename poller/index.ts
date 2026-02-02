@@ -59,6 +59,13 @@ function connectToBackpack() {
             "*", //auto gen id with timestamp
             {
                 data: JSON.stringify(payload)
+            },
+            {
+                TRIM: {
+                    strategy: "MAXLEN",
+                    strategyModifier: "~",
+                    threshold: 100_000
+                }
             }
         )
 
